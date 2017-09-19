@@ -1,9 +1,8 @@
-package parallelai.sot.json
+package parallelai.sot.executor.model
 
 import java.io.InputStream
 
-import parallelai.sot.json.SOTMacroConfig._
-
+import parallelai.sot.executor.model.SOTMacroConfig._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError, _}
 
