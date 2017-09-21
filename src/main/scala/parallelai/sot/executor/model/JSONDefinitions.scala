@@ -2,9 +2,8 @@ package parallelai.sot.executor.model
 
 import java.io.InputStream
 
-import parallelai.sot.executor.model.SOTMacroConfig._
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError, _}
+import spray.json._
 
 import scala.collection.immutable.Seq
 
@@ -23,13 +22,17 @@ object SOTMacroConfig {
   case class DatastoreSchema(name: String, fields: List[DatastoreSchemaField])
   case class DatastoreSchemaType(`type`: String, schema: Option[DatastoreSchema]) extends SchemaType
 
-  case class Config(in: SchemaType, out: SchemaType, dag: String, steps: List[Op])
+  case class DAGMapping(from: String, to: String)
+  case class Config(in: SchemaType, out: SchemaType, dag: List[DAGMapping], steps: List[Op])
 
   case class Op(`type`: String, name: String, op: String, func: String)
 
 }
 
 object SOTMacroJsonConfig {
+
+  import SOTMacroConfig._
+
   implicit val avroSchemaFormat = jsonFormat5(PubSubSchemaType)
   implicit val bigQueryFormat = jsonFormat5(BigQuerySchemaType)
   implicit val bigTableFormat = jsonFormat5(BigTableSchemaType)
@@ -87,6 +90,7 @@ object SOTMacroJsonConfig {
   }
 
   implicit val opFormat = jsonFormat4(Op)
+  implicit val dagFormat = jsonFormat2(DAGMapping)
   implicit val configFormat = jsonFormat4(Config)
 
   def apply(fileName: String): Config = {
