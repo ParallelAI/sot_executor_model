@@ -22,8 +22,15 @@ object SOTMacroConfig {
   case class DatastoreSchema(name: String, fields: List[DatastoreSchemaField])
   case class DatastoreSchemaType(`type`: String, schema: Option[DatastoreSchema]) extends SchemaType
 
-  case class DAGMapping(from: String, to: String)
-  case class Config(in: SchemaType, out: SchemaType, dag: List[DAGMapping], steps: List[Op])
+  case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
+  case class Config(in: SchemaType, out: SchemaType, dag: List[DAGMapping], steps: List[Op]) {
+
+    def parseDAG() : Topology[String, DAGMapping] = {
+      val vertices = (dag.map(_.from) ++ dag.map(_.to)).distinct
+      Topology.createTopology(vertices, dag)
+    }
+
+  }
 
   case class Op(`type`: String, name: String, op: String, func: String)
 
