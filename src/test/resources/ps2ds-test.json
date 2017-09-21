@@ -32,6 +32,12 @@
   },
   "steps": [
     {
+      "type": "source",
+      "name": "source1",
+      "op": "",
+      "func": ""
+    },
+    {
       "type": "transformation",
       "name": "mapper1",
       "op": "map",
@@ -54,9 +60,19 @@
       "name": "sumByKey",
       "op": "sumByKey",
       "func": ""
+    },
+    {
+      "type": "sink",
+      "name": "sink1",
+      "op": "",
+      "func": ""
     }
   ],
   "dag": [
+    {
+      "from": "source1",
+      "to": "filter"
+    },
     {
       "from": "filter",
       "to": "mapper1"
@@ -68,6 +84,10 @@
     {
       "from": "sumByKey",
       "to": "mapper2"
+    },
+    {
+      "from": "mapper2",
+      "to": "sink1"
     }
   ]
 }
