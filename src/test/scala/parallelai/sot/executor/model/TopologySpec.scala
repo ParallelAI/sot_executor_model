@@ -77,13 +77,13 @@ class TopologySpec extends WordSpec with Matchers with BeforeAndAfterAll{
 
     "parse topology from file" in {
 
-      val expectedV = List("source1", "filter", "mapper1", "sumByKey", "mapper2", "sink1")
+      val expectedV = List("in", "filter", "mapper1", "sumByKey", "mapper2", "out")
       val expectedE = List(
         DAGMapping("mapper1", "sumByKey"),
-        DAGMapping("source1", "filter"),
+        DAGMapping("in", "filter"),
         DAGMapping("sumByKey", "mapper2"),
         DAGMapping("filter", "mapper1"),
-        DAGMapping("mapper2", "sink1")
+        DAGMapping("mapper2", "out")
       )
       val expectedTop = Topology.createTopology(expectedV, expectedE)
 
@@ -94,14 +94,14 @@ class TopologySpec extends WordSpec with Matchers with BeforeAndAfterAll{
     "check sinks from topology from file" in {
 
       val sinks = topFromFile.getSinkVertices()
-      sinks should be(Set("sink1"))
+      sinks should be(Set("out"))
 
     }
 
     "check sources from topology from file" in {
 
       val sources = topFromFile.getSourceVertices()
-      sources should be(Set("source1"))
+      sources should be(Set("in"))
 
     }
 
