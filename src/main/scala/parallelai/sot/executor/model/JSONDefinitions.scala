@@ -10,7 +10,10 @@ import scala.collection.immutable.Seq
 
 object SOTMacroConfig {
 
-  sealed trait SchemaType
+  sealed trait SchemaType {
+    def `type`: String
+    def name: String
+  }
 
   case class PubSubSchemaType(`type`: String, name: String, serialization: String, definition: JsObject, topic: String) extends SchemaType
 
@@ -35,7 +38,10 @@ object SOTMacroConfig {
 
   }
 
-  sealed trait OpType
+  sealed trait OpType {
+    def `type`: String
+    def name: String
+  }
 
   case class TransformationOp(`type`: String, name: String, op: String, func: String) extends OpType
 
