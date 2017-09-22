@@ -40,9 +40,14 @@
       }
     },
     {
-      "type": "datastore",
-      "kind": "kind1",
-      "name": "datastore1"
+      "type": "bigtable",
+      "name": "bigtable1",
+      "instanceId": "bigtable-test",
+      "tableId": "bigquerytest",
+      "numNodes": 3,
+      "familyName": [
+        "cf"
+      ]
     }
   ],
   "steps": [
@@ -50,7 +55,6 @@
       "type": "source",
       "name": "in",
       "schema": "pubsub1"
-
     },
     {
       "type": "transformation",
@@ -68,7 +72,7 @@
       "type": "transformation",
       "name": "mapper2",
       "op": "map",
-      "func": "m => 'teamscores ->> m._1 :: 'score1 ->> m._2.toString :: 'score2 ->> (m._2 * 0.123) :: HNil"
+      "func": "m => BigTableRecord(m._1, (\"cf\", \"counter\", m._2), (\"cf\", \"counter2\", m._2 * 1.225))"
     },
     {
       "type": "transformation",
@@ -79,7 +83,7 @@
     {
       "type": "sink",
       "name": "out",
-      "schema": "datastore1"
+      "schema": "bigtable1"
     }
   ],
   "dag": [

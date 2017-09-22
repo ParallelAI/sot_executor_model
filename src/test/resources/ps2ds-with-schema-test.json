@@ -42,7 +42,24 @@
     {
       "type": "datastore",
       "kind": "kind1",
-      "name": "datastore1"
+      "name": "datastore1",
+      "definition": {
+        "name": "OutSchema",
+        "fields": [
+          {
+            "name": "teamscores",
+            "type": "String"
+          },
+          {
+            "name": "score1",
+            "type": "String"
+          },
+          {
+            "name": "score2",
+            "type": "Double"
+          }
+        ]
+      }
     }
   ],
   "steps": [
@@ -68,7 +85,7 @@
       "type": "transformation",
       "name": "mapper2",
       "op": "map",
-      "func": "m => 'teamscores ->> m._1 :: 'score1 ->> m._2.toString :: 'score2 ->> (m._2 * 0.123) :: HNil"
+      "func": "m => OutSchema(m._1, m._2.toString, m._2 * 0.123)"
     },
     {
       "type": "transformation",

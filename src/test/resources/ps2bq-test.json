@@ -4,10 +4,10 @@
       "type": "pubsub",
       "serialization": "Avro",
       "name": "pubsub1",
-      "topic": "p2pin",
+      "topic": "p2pout",
       "definition": {
         "type": "record",
-        "name": "Message",
+        "name": "MessageExtended",
         "namespace": "parallelai.sot.avro",
         "fields": [
           {
@@ -34,15 +34,40 @@
             "name": "eventTimeStr",
             "type": "string",
             "doc": "event time string for debugging"
+          },
+          {
+            "name": "count",
+            "type": "int",
+            "doc": "example count"
           }
         ],
         "doc": "A basic schema for storing user records"
       }
     },
     {
-      "type": "datastore",
-      "kind": "kind1",
-      "name": "datastore1"
+      "type": "bigquery",
+      "name": "bigquery1",
+      "dataset": "bigquerytest",
+      "table": "streaming_word_extract26",
+      "definition": {
+        "fields": [
+          {
+            "mode": "REQUIRED",
+            "name": "user",
+            "type": "STRING"
+          },
+          {
+            "mode": "REQUIRED",
+            "name": "total_score",
+            "type": "INTEGER"
+          },
+          {
+            "mode": "REQUIRED",
+            "name": "processing_time",
+            "type": "STRING"
+          }
+        ]
+      }
     }
   ],
   "steps": [
@@ -68,7 +93,7 @@
       "type": "transformation",
       "name": "mapper2",
       "op": "map",
-      "func": "m => 'teamscores ->> m._1 :: 'score1 ->> m._2.toString :: 'score2 ->> (m._2 * 0.123) :: HNil"
+      "func": "m => BigQueryRow(m._1, m._2, Helper.fmt.print(Instant.now()))"
     },
     {
       "type": "transformation",
@@ -79,7 +104,7 @@
     {
       "type": "sink",
       "name": "out",
-      "schema": "datastore1"
+      "schema": "bigquery1"
     }
   ],
   "dag": [
