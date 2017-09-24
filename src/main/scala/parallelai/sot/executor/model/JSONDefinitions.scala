@@ -42,7 +42,7 @@ object SOTMacroConfig {
 
 
   /** Schema Types **/
-  case class PubSubSchemaType(`type`: String, name: String, serialization: String, definition: AvroDefinition, topic: String) extends SchemaTypeWithDefinition
+  case class PubSubSchemaType(`type`: String, name: String, definition: AvroDefinition, topic: String) extends SchemaTypeWithDefinition
 
   case class BigQuerySchemaType(`type`: String, name: String, definition: BigQueryDefinition, dataset: String, table: String) extends SchemaTypeWithDefinition
 
@@ -86,7 +86,7 @@ object SOTMacroJsonConfig {
   implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
   implicit val datastoreDefinitionFormat = jsonFormat3(DatastoreDefinition)
 
-  implicit val pubsubSchemaFormat = jsonFormat5(PubSubSchemaType)
+  implicit val pubsubSchemaFormat = jsonFormat4(PubSubSchemaType)
   implicit val bigQueryFormat = jsonFormat5(BigQuerySchemaType)
   implicit val bigTableFormat = jsonFormat6(BigTableSchemaType)
   implicit val datastoreSchemaFormat = jsonFormat4(DatastoreSchemaType)
@@ -144,9 +144,9 @@ object SOTMacroJsonConfig {
     def read(value: JsValue): SchemaType = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "pubsub" => {
-          value.asJsObject.getFields("type", "serialization", "name", "definition", "topic") match {
-            case Seq(JsString(objType), JsString(serialization), JsString(name), definition, JsString(topic)) =>
-              PubSubSchemaType(`type` = objType, serialization = serialization, name = name, definition = parsePubsubDefinition(definition), topic = topic)
+          value.asJsObject.getFields("type", "name", "definition", "topic") match {
+            case Seq(JsString(objType), JsString(name), definition, JsString(topic)) =>
+              PubSubSchemaType(`type` = objType, name = name, definition = parsePubsubDefinition(definition), topic = topic)
             case _ => deserializationError("PubSub expected")
           }
         }

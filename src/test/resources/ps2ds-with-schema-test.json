@@ -2,7 +2,6 @@
   "schemas": [
     {
       "type": "pubsub",
-      "serialization": "Avro",
       "name": "pubsub1",
       "topic": "p2pin",
       "definition": {

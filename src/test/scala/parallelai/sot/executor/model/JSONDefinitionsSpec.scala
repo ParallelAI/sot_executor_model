@@ -78,7 +78,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[BigQueryDefinition]
 
-      val schemas = List(PubSubSchemaType(`type` = "pubsub", name = "pubsub1", serialization = "Avro", definition = schema, topic = "p2pout"),
+      val schemas = List(PubSubSchemaType(`type` = "pubsub", name = "pubsub1", definition = schema, topic = "p2pout"),
         BigQuerySchemaType(`type` = "bigquery", name = "bigquery1", definition = schemaOut, dataset = "bigquerytest", table = "streaming_word_extract26"))
 
       val dag = List(
@@ -142,7 +142,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |}
         """.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = PubSubSchemaType(`type` = "pubsub", name = "pubsub1", serialization = "Avro", definition = schema1, topic = "p2pin")
+      val inSchema = PubSubSchemaType(`type` = "pubsub", name = "pubsub1", definition = schema1, topic = "p2pin")
 
       val outSchema = BigTableSchemaType(`type` = "bigtable", name = "bigtable1" ,instanceId = "bigtable-test",
         tableId = "bigquerytest", familyName = List("cf"), numNodes = 3)
@@ -253,8 +253,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = PubSubSchemaType(`type` = "pubsub", name = "pubsub1", serialization = "Avro", definition = schema1, topic = "p2pin")
-      val outSchema = PubSubSchemaType(`type` = "pubsub", name = "pubsub2", serialization = "Avro", definition = schema2, topic = "p2pout")
+      val inSchema = PubSubSchemaType(`type` = "pubsub", name = "pubsub1", definition = schema1, topic = "p2pin")
+      val outSchema = PubSubSchemaType(`type` = "pubsub", name = "pubsub2", definition = schema2, topic = "p2pout")
 
       val schemas = List(inSchema, outSchema)
 
@@ -314,7 +314,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = PubSubSchemaType(`type` = "pubsub", serialization = "Avro", name = "pubsub1", definition = schema1, topic = "p2pin")
+      val inSchema = PubSubSchemaType(`type` = "pubsub", name = "pubsub1", definition = schema1, topic = "p2pin")
 
       val outSchema = DatastoreSchemalessSchemaType(`type` = "datastore", name = "datastore1", kind = "kind1")
 
@@ -404,7 +404,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[DatastoreDefinition]
 
-      val inSchema = PubSubSchemaType(`type` = "pubsub", serialization = "Avro", name = "pubsub1", definition = def1, topic = "p2pin")
+      val inSchema = PubSubSchemaType(`type` = "pubsub", name = "pubsub1", definition = def1, topic = "p2pin")
       val outSchema = DatastoreSchemaType(`type` = "datastore", name = "datastore1", kind = "kind1", definition = def2)
 
       val schemas = List(inSchema, outSchema)
