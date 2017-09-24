@@ -344,7 +344,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val config = SOTMacroJsonConfig("ps2ds-with-schema-test.json")
 
-      val schema1 =
+      val def1 =
         """
           |{
           |      "type": "record",
@@ -381,8 +381,9 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val schema2 =
+      val def2 =
         """{
+          |      "type": "datastoredefinition",
           |      "name": "OutSchema",
           |      "fields": [
           |        {
@@ -401,8 +402,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[DatastoreDefinition]
 
-      val inSchema = PubSubSchemaType(`type` = "pubsub", serialization = "Avro", name = "pubsub1", definition = schema1, topic = "p2pin")
-      val outSchema = DatastoreSchemaType(`type` = "datastore", name = "datastore1", kind = "kind1", definition = Some(schema2))
+      val inSchema = PubSubSchemaType(`type` = "pubsub", serialization = "Avro", name = "pubsub1", definition = def1, topic = "p2pin")
+      val outSchema = DatastoreSchemaType(`type` = "datastore", name = "datastore1", kind = "kind1", definition = Some(def2))
 
       val schemas = List(inSchema, outSchema)
 
