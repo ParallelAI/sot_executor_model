@@ -2,6 +2,7 @@ package parallelai.sot.executor.model
 
 import java.io.InputStream
 
+import parallelai.sot.executor.model.SOTMacroConfig.DatastoreSchemaType
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -20,6 +21,13 @@ object SOTMacroConfig {
     def `type`: String
 
     def name: String
+
+  }
+
+  sealed trait SchemaTypeWithDefinition extends SchemaType {
+
+    def definition : Definition
+
   }
 
 
@@ -32,14 +40,17 @@ object SOTMacroConfig {
 
   case class DatastoreDefinition(`type`: String, name: String, fields: List[DatastoreDefinitionField]) extends Definition
 
-  /** Schema Types **/
-  case class PubSubSchemaType(`type`: String, name: String, serialization: String, definition: AvroDefinition, topic: String) extends SchemaType
 
-  case class BigQuerySchemaType(`type`: String, name: String, definition: BigQueryDefinition, dataset: String, table: String) extends SchemaType
+  /** Schema Types **/
+  case class PubSubSchemaType(`type`: String, name: String, serialization: String, definition: AvroDefinition, topic: String) extends SchemaTypeWithDefinition
+
+  case class BigQuerySchemaType(`type`: String, name: String, definition: BigQueryDefinition, dataset: String, table: String) extends SchemaTypeWithDefinition
 
   case class BigTableSchemaType(`type`: String, name: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends SchemaType
 
-  case class DatastoreSchemaType(`type`: String, name: String, kind: String, definition: Option[DatastoreDefinition]) extends SchemaType
+  case class DatastoreSchemaType(`type`: String, name: String, kind: String, definition: DatastoreDefinition) extends SchemaTypeWithDefinition
+
+  case class DatastoreSchemalessSchemaType(`type`: String, name: String, kind: String) extends SchemaType
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
@@ -73,12 +84,13 @@ object SOTMacroJsonConfig {
   implicit val avroDefinitionFormat = jsonFormat4(AvroDefinition)
   implicit val bigQueryDefinitionFormat = jsonFormat3(BigQueryDefinition)
   implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
-  implicit val datastoreSchemaDefinitionFormat = jsonFormat3(DatastoreDefinition)
+  implicit val datastoreDefinitionFormat = jsonFormat3(DatastoreDefinition)
 
   implicit val pubsubSchemaFormat = jsonFormat5(PubSubSchemaType)
   implicit val bigQueryFormat = jsonFormat5(BigQuerySchemaType)
   implicit val bigTableFormat = jsonFormat6(BigTableSchemaType)
   implicit val datastoreSchemaFormat = jsonFormat4(DatastoreSchemaType)
+  implicit val datastoreSchemalessSchemaTypeFormat = jsonFormat3(DatastoreSchemalessSchemaType)
 
   implicit object SchemaJsonFormat extends RootJsonFormat[SchemaType] {
 
@@ -88,6 +100,7 @@ object SOTMacroJsonConfig {
         case s: BigQuerySchemaType => s.toJson
         case s: BigTableSchemaType => s.toJson
         case s: DatastoreSchemaType => s.toJson
+        case s: DatastoreSchemalessSchemaType => s.toJson
       }
 
     def parsePubsubDefinition(definition: JsValue): AvroDefinition = {
@@ -151,13 +164,14 @@ object SOTMacroJsonConfig {
               BigTableSchemaType(`type` = objType, name = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
             case _ => deserializationError("BigTable expected")
           }
+
         }
         case Seq(JsString(typ)) if typ == "datastore" => {
           value.asJsObject.getFields("type", "name", "definition", "kind") match {
             case Seq(JsString(objType), JsString(name), definition, JsString(kind)) =>
-              DatastoreSchemaType(`type` = objType, name = name, kind = kind, definition = Some(parseDatastoreDefinition(definition)))
+              DatastoreSchemaType(`type` = objType, name = name, kind = kind, definition = parseDatastoreDefinition(definition))
             case Seq(JsString(objType), JsString(name), JsString(kind)) =>
-              DatastoreSchemaType(`type` = objType, name = name, kind = kind, definition = None)
+              DatastoreSchemalessSchemaType(`type` = objType, name = name, kind = kind)
             case _ => deserializationError("Datastore expected")
           }
         }
