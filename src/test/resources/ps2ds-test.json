@@ -50,7 +50,6 @@
       "type": "source",
       "name": "in",
       "schema": "pubsub1"
-
     },
     {
       "type": "transformation",

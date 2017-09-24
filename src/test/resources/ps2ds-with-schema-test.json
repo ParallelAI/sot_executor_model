@@ -44,6 +44,7 @@
       "kind": "kind1",
       "name": "datastore1",
       "definition": {
+        "type": "datastoredefinition",
         "name": "OutSchema",
         "fields": [
           {
@@ -67,7 +68,6 @@
       "type": "source",
       "name": "in",
       "schema": "pubsub1"
-
     },
     {
       "type": "transformation",

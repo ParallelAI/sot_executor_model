@@ -10,22 +10,36 @@ import scala.collection.immutable.Seq
 
 object SOTMacroConfig {
 
-  sealed trait SchemaType {
+  sealed trait Definition {
     def `type`: String
+
     def name: String
   }
 
-  case class PubSubSchemaType(`type`: String, name: String, serialization: String, definition: JsObject, topic: String) extends SchemaType
+  sealed trait SchemaType {
+    def `type`: String
 
-  case class BigQuerySchemaType(`type`: String, name: String, definition: JsObject, dataset: String, table: String) extends SchemaType
+    def name: String
+  }
+
+
+  /** Schema Definitions **/
+  case class AvroDefinition(`type`: String, name: String, namespace: String, fields: JsArray) extends Definition
+
+  case class BigQueryDefinition(`type`: String, name: String, fields: JsArray) extends Definition
+
+  case class DatastoreDefinitionField(`type`: String, name: String)
+
+  case class DatastoreDefinition(`type`: String, name: String, fields: List[DatastoreDefinitionField]) extends Definition
+
+  /** Schema Types **/
+  case class PubSubSchemaType(`type`: String, name: String, serialization: String, definition: AvroDefinition, topic: String) extends SchemaType
+
+  case class BigQuerySchemaType(`type`: String, name: String, definition: BigQueryDefinition, dataset: String, table: String) extends SchemaType
 
   case class BigTableSchemaType(`type`: String, name: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends SchemaType
 
-  case class DatastoreSchemaField(`type`: String, name: String)
-
-  case class DatastoreSchemaDefinition(name: String, fields: List[DatastoreSchemaField])
-
-  case class DatastoreSchemaType(`type`: String, name: String, kind: String, definition: Option[DatastoreSchemaDefinition]) extends SchemaType
+  case class DatastoreSchemaType(`type`: String, name: String, kind: String, definition: Option[DatastoreDefinition]) extends SchemaType
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
@@ -40,6 +54,7 @@ object SOTMacroConfig {
 
   sealed trait OpType {
     def `type`: String
+
     def name: String
   }
 
@@ -55,12 +70,14 @@ object SOTMacroJsonConfig {
 
   import SOTMacroConfig._
 
-  implicit val avroSchemaFormat = jsonFormat5(PubSubSchemaType)
+  implicit val avroDefinitionFormat = jsonFormat4(AvroDefinition)
+  implicit val bigQueryDefinitionFormat = jsonFormat3(BigQueryDefinition)
+  implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
+  implicit val datastoreSchemaDefinitionFormat = jsonFormat3(DatastoreDefinition)
+
+  implicit val pubsubSchemaFormat = jsonFormat5(PubSubSchemaType)
   implicit val bigQueryFormat = jsonFormat5(BigQuerySchemaType)
   implicit val bigTableFormat = jsonFormat6(BigTableSchemaType)
-
-  implicit val datastoreSchemaFieldFormat = jsonFormat2(DatastoreSchemaField)
-  implicit val datastoreSchemaDefinitionFormat = jsonFormat2(DatastoreSchemaDefinition)
   implicit val datastoreSchemaFormat = jsonFormat4(DatastoreSchemaType)
 
   implicit object SchemaJsonFormat extends RootJsonFormat[SchemaType] {
@@ -73,19 +90,57 @@ object SOTMacroJsonConfig {
         case s: DatastoreSchemaType => s.toJson
       }
 
+    def parsePubsubDefinition(definition: JsValue): AvroDefinition = {
+      definition.asJsObject.getFields("type") match {
+        case Seq(JsString(typ)) if typ == "record" =>
+          definition.asJsObject.getFields("type", "name", "namespace", "fields") match {
+            case Seq(JsString(objType), JsString(name), JsString(namespace), fields) =>
+              AvroDefinition(`type` = objType, name = name, namespace = namespace, fields = fields.asInstanceOf[JsArray])
+            case _ => deserializationError("AvroDefinition expected")
+          }
+        case _ => deserializationError("Unsupported definition for pubsub")
+      }
+    }
+
+    def parseBigQueryDefinition(definition: JsValue): BigQueryDefinition = {
+      definition.asJsObject.getFields("type") match {
+        case Seq(JsString(typ)) if typ == "bigquerydefinition" =>
+          definition.asJsObject.getFields("type", "name", "fields") match {
+            case Seq(JsString(objType), JsString(name), fields) =>
+              BigQueryDefinition(`type` = objType, name = name, fields = fields.asInstanceOf[JsArray])
+            case _ => deserializationError("BigQueryDefinition is expected")
+          }
+        case _ => deserializationError("Unsupported definition for bigquery")
+      }
+    }
+
+    def parseDatastoreDefinition(definition: JsValue): DatastoreDefinition = {
+      definition.asJsObject.getFields("type") match {
+        case Seq(JsString(typ)) if typ == "datastoredefinition" =>
+          definition.asJsObject.getFields("type", "name", "fields") match {
+            case Seq(JsString(typ), JsString(name), JsArray(fields)) =>
+              val fl = fields.map(_.convertTo[DatastoreDefinitionField]).toList
+              DatastoreDefinition(`type` = typ, name = name, fields = fl)
+            case _ => deserializationError("DatastoreDefinition is expected")
+          }
+        case _ => deserializationError("unsupported definition for datastore")
+      }
+    }
+
+
     def read(value: JsValue): SchemaType = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "pubsub" => {
           value.asJsObject.getFields("type", "serialization", "name", "definition", "topic") match {
             case Seq(JsString(objType), JsString(serialization), JsString(name), definition, JsString(topic)) =>
-              PubSubSchemaType(`type` = objType, serialization = serialization, name = name, definition = definition.asJsObject, topic = topic)
+              PubSubSchemaType(`type` = objType, serialization = serialization, name = name, definition = parsePubsubDefinition(definition), topic = topic)
             case _ => deserializationError("PubSub expected")
           }
         }
         case Seq(JsString(typ)) if typ == "bigquery" => {
           value.asJsObject.getFields("type", "name", "definition", "dataset", "table") match {
             case Seq(JsString(objType), JsString(name), definition, JsString(dataset), JsString(table)) =>
-              BigQuerySchemaType(`type` = objType, name = name, definition = definition.asJsObject, table = table, dataset = dataset)
+              BigQuerySchemaType(`type` = objType, name = name, definition = parseBigQueryDefinition(definition), table = table, dataset = dataset)
             case _ => deserializationError("BigQuery expected")
           }
         }
@@ -99,8 +154,8 @@ object SOTMacroJsonConfig {
         }
         case Seq(JsString(typ)) if typ == "datastore" => {
           value.asJsObject.getFields("type", "name", "definition", "kind") match {
-            case Seq(JsString(objType), JsString(name), JsObject(definition), JsString(kind)) =>
-              DatastoreSchemaType(`type` = objType, name = name, kind = kind, definition = Some(definition.toJson.convertTo[DatastoreSchemaDefinition]))
+            case Seq(JsString(objType), JsString(name), definition, JsString(kind)) =>
+              DatastoreSchemaType(`type` = objType, name = name, kind = kind, definition = Some(parseDatastoreDefinition(definition)))
             case Seq(JsString(objType), JsString(name), JsString(kind)) =>
               DatastoreSchemaType(`type` = objType, name = name, kind = kind, definition = None)
             case _ => deserializationError("Datastore expected")

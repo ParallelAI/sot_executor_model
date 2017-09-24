@@ -50,6 +50,8 @@
       "dataset": "bigquerytest",
       "table": "streaming_word_extract26",
       "definition": {
+        "type": "bigquerydefinition",
+        "name": "BigQueryRow",
         "fields": [
           {
             "mode": "REQUIRED",
