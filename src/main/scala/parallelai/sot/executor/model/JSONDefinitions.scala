@@ -79,7 +79,7 @@ object SOTMacroConfig {
 
   case class SourceOp(`type`: String, name: String, schema: String, source: String) extends OpType
 
-  case class SinkOp(`type`: String, name: String, schema: String, source: Option[String]) extends OpType
+  case class SinkOp(`type`: String, name: String, schema: Option[String], source: String) extends OpType
 
 }
 
@@ -239,11 +239,11 @@ object SOTMacroJsonConfig {
           }
         }
         case Seq(JsString(typ)) if typ == "sink" => {
-          value.asJsObject.getFields("type", "name", "schema") match {
-            case Seq(JsString(objType), JsString(name), JsString(schema), JsString(source)) =>
-              SinkOp(`type` = objType, name = name, schema = schema, source = Some(source))
-            case Seq(JsString(objType), JsString(name), JsString(schema), JsString(source)) =>
-              SinkOp(`type` = objType, name = name, schema = schema, source = None)
+          value.asJsObject.getFields("type", "name", "source", "schema") match {
+            case Seq(JsString(objType), JsString(name), JsString(source), JsString(schema)) =>
+              SinkOp(`type` = objType, name = name, schema = Some(schema), source = source)
+            case Seq(JsString(objType), JsString(name), JsString(source)) =>
+              SinkOp(`type` = objType, name = name, schema = None, source = source)
             case _ => deserializationError("SinkOp type expected")
           }
         }

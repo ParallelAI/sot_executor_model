@@ -47,7 +47,7 @@
     },
     {
       "type": "bigquery",
-      "name": "bigquery1",
+      "name": "bigqueryschema1",
       "version": "version3",
       "definition": {
         "type": "bigquerydefinition",

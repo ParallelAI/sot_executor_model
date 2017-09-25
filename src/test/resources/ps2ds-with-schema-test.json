@@ -43,7 +43,7 @@
     {
       "type": "datastore",
       "name": "datastore1",
-      "version": "version1",
+      "version": "version3",
       "definition": {
         "type": "datastoredefinition",
         "name": "OutSchema",
