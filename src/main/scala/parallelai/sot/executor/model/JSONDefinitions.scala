@@ -87,6 +87,11 @@ object SOTMacroJsonConfig {
 
   import SOTMacroConfig._
 
+  implicit val avroDefinitionFormat = jsonFormat4(AvroDefinition)
+  implicit val bigQueryDefinitionFormat = jsonFormat3(BigQueryDefinition)
+  implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
+  implicit val datastoreDefinitionFormat = jsonFormat3(DatastoreDefinition)
+
   implicit object DefinitionJsonFormat extends RootJsonFormat[Definition] {
 
     def write(c: Definition): JsValue =
@@ -121,11 +126,6 @@ object SOTMacroJsonConfig {
       }
     }
   }
-
-  implicit val avroDefinitionFormat = jsonFormat4(AvroDefinition)
-  implicit val bigQueryDefinitionFormat = jsonFormat3(BigQueryDefinition)
-  implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
-  implicit val datastoreDefinitionFormat = jsonFormat3(DatastoreDefinition)
 
   implicit val pubSubSourceDefinition = jsonFormat3(PubSubSource)
   implicit val bigQuerySourceFormat = jsonFormat4(BigQuerySource)
