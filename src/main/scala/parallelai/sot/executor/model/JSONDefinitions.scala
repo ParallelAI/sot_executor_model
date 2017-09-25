@@ -2,7 +2,6 @@ package parallelai.sot.executor.model
 
 import java.io.InputStream
 
-import parallelai.sot.executor.model.SOTMacroConfig.{DatastoreSchemaType, Definition, SchemaType}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -17,17 +16,20 @@ object SOTMacroConfig {
     def name: String
   }
 
-  sealed trait SchemaType {
+  sealed trait Schema {
     def `type`: String
 
     def name: String
 
-  }
-
-  sealed trait SchemaTypeWithDefinition extends SchemaType {
+    def version: String
 
     def definition: Definition
+  }
 
+  sealed trait Source {
+    def `type`: String
+
+    def name: String
   }
 
   /** Schema Definitions **/
@@ -40,19 +42,25 @@ object SOTMacroConfig {
   case class DatastoreDefinition(`type`: String, name: String, fields: List[DatastoreDefinitionField]) extends Definition
 
   /** Schema Types **/
-  case class PubSubSchemaType(`type`: String, name: String, definition: Definition, topic: String) extends SchemaTypeWithDefinition
+  case class AvroSchema(`type`: String, name: String, version: String, definition: Definition) extends Schema
 
-  case class BigQuerySchemaType(`type`: String, name: String, definition: Definition, dataset: String, table: String) extends SchemaTypeWithDefinition
+  case class BigQuerySchema(`type`: String, name: String, version: String, definition: Definition) extends Schema
 
-  case class BigTableSchemaType(`type`: String, name: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends SchemaType
+  case class DatastoreSchema(`type`: String, name: String, version: String, definition: Definition) extends Schema
 
-  case class DatastoreSchemaType(`type`: String, name: String, kind: String, definition: Definition) extends SchemaTypeWithDefinition
+  /** Source Types **/
+  case class PubSubSource(`type`: String, name: String, topic: String) extends Source
 
-  case class DatastoreSchemalessSchemaType(`type`: String, name: String, kind: String) extends SchemaType
+  case class BigQuerySource(`type`: String, name: String, dataset: String, table: String) extends Source
+
+  case class BigTableSource(`type`: String, name: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends Source
+
+  case class DatastoreSource(`type`: String, name: String, kind: String) extends Source
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
-  case class Config(schemas: List[SchemaType], dag: List[DAGMapping], steps: List[OpType]) {
+  case class Config(name: String, version: String, schemas: List[Schema], sources: List[Source],
+                    dag: List[DAGMapping], steps: List[OpType]) {
 
     def parseDAG(): Topology[String, DAGMapping] = {
       val vertices = (dag.map(_.from) ++ dag.map(_.to)).distinct
@@ -69,9 +77,9 @@ object SOTMacroConfig {
 
   case class TransformationOp(`type`: String, name: String, op: String, func: String) extends OpType
 
-  case class SourceOp(`type`: String, name: String, schema: String) extends OpType
+  case class SourceOp(`type`: String, name: String, schema: String, source: String) extends OpType
 
-  case class SinkOp(`type`: String, name: String, schema: String) extends OpType
+  case class SinkOp(`type`: String, name: String, schema: String, source: Option[String]) extends OpType
 
 }
 
@@ -119,65 +127,97 @@ object SOTMacroJsonConfig {
   implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
   implicit val datastoreDefinitionFormat = jsonFormat3(DatastoreDefinition)
 
-  implicit val pubsubSchemaFormat = jsonFormat4(PubSubSchemaType)
-  implicit val bigQueryFormat = jsonFormat5(BigQuerySchemaType)
-  implicit val bigTableFormat = jsonFormat6(BigTableSchemaType)
-  implicit val datastoreSchemaFormat = jsonFormat4(DatastoreSchemaType)
-  implicit val datastoreSchemalessSchemaTypeFormat = jsonFormat3(DatastoreSchemalessSchemaType)
+  implicit val pubSubSourceDefinition = jsonFormat3(PubSubSource)
+  implicit val bigQuerySourceFormat = jsonFormat4(BigQuerySource)
+  implicit val bigTableSourceFormat = jsonFormat6(BigTableSource)
+  implicit val datastoreSource = jsonFormat3(DatastoreSource)
 
-  implicit object SchemaJsonFormat extends RootJsonFormat[SchemaType] {
+  implicit object SourceJsonFormat extends RootJsonFormat[Source] {
 
-    def write(c: SchemaType): JsValue =
-      c match {
-        case s: PubSubSchemaType => s.toJson
-        case s: BigQuerySchemaType => s.toJson
-        case s: BigTableSchemaType => s.toJson
-        case s: DatastoreSchemaType => s.toJson
-        case s: DatastoreSchemalessSchemaType => s.toJson
+    def write(s: Source): JsValue =
+      s match {
+        case j: PubSubSource => j.toJson
+        case j: BigQuerySource => j.toJson
+        case j: BigTableSource => j.toJson
+        case j: DatastoreSource => j.toJson
       }
 
-    def read(value: JsValue): SchemaType = {
+    def read(value: JsValue): Source = {
       value.asJsObject.getFields("type") match {
-        case Seq(JsString(typ)) if typ == "pubsub" => {
-          value.asJsObject.getFields("type", "name", "definition", "topic") match {
-            case Seq(JsString(objType), JsString(name), definition, JsString(topic)) =>
-              PubSubSchemaType(`type` = objType, name = name, definition = definition.convertTo[Definition], topic = topic)
-            case _ => deserializationError("PubSub expected")
+        case Seq(JsString(typ)) if typ == "pubsub" =>
+          value.asJsObject.getFields("type", "name", "topic") match {
+            case Seq(JsString(objType), JsString(name), JsString(topic)) =>
+              PubSubSource(`type` = objType, name = name, topic = topic)
+            case _ => deserializationError("Pubsub source expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "bigquery" => {
-          value.asJsObject.getFields("type", "name", "definition", "dataset", "table") match {
-            case Seq(JsString(objType), JsString(name), definition, JsString(dataset), JsString(table)) =>
-              BigQuerySchemaType(`type` = objType, name = name, definition = definition.convertTo[Definition], table = table, dataset = dataset)
-            case _ => deserializationError("BigQuery expected")
+        case Seq(JsString(typ)) if typ == "bigquery" =>
+          value.asJsObject.getFields("type", "name", "dataset", "table") match {
+            case Seq(JsString(objType), JsString(name), JsString(dataset), JsString(table)) =>
+              BigQuerySource(`type` = objType, name = name, dataset = dataset, table = table)
+            case _ => deserializationError("BigQuery source expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "bigtable" => {
+        case Seq(JsString(typ)) if typ == "bigtable" =>
           value.asJsObject.getFields("type", "name", "instanceId", "tableId", "familyName", "numNodes") match {
             case Seq(JsString(objType), JsString(name), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
               val fn = familyName.convertTo[List[String]]
-              BigTableSchemaType(`type` = objType, name = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
-            case _ => deserializationError("BigTable expected")
+              BigTableSource(`type` = objType, name = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
+            case _ => deserializationError("BigTable source expected")
           }
+        case Seq(JsString(typ)) if typ == "datastore" =>
+          value.asJsObject.getFields("type", "name", "kind") match {
+            case Seq(JsString(objType), JsString(name), JsString(kind)) =>
+              DatastoreSource(`type` = objType, name = name, kind = kind)
+            case _ => deserializationError("Datastore source expected")
+          }
+        case _ => deserializationError("Source expected")
+      }
+    }
+  }
 
+  implicit val avroSchemaFormat = jsonFormat4(AvroSchema)
+  implicit val bigQuerySchemaFormat = jsonFormat4(BigQuerySchema)
+  implicit val datastoreSchemaFormat = jsonFormat4(DatastoreSchema)
+
+  implicit object SchemaJsonFormat extends RootJsonFormat[Schema] {
+
+    def write(c: Schema): JsValue =
+      c match {
+        case s: AvroSchema => s.toJson
+        case s: BigQuerySchema => s.toJson
+        case s: DatastoreSchema => s.toJson
+      }
+
+    def read(value: JsValue): Schema = {
+      value.asJsObject.getFields("type") match {
+        case Seq(JsString(typ)) if typ == "avro" => {
+          value.asJsObject.getFields("type", "name", "version", "definition") match {
+            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
+              AvroSchema(`type` = objType, name = name, version = version, definition = definition.convertTo[Definition])
+            case _ => deserializationError("Avro schema expected")
+          }
+        }
+        case Seq(JsString(typ)) if typ == "bigquery" => {
+          value.asJsObject.getFields("type", "name", "version", "definition") match {
+            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
+              BigQuerySchema(`type` = objType, name = name, version = version, definition = definition.convertTo[Definition])
+            case _ => deserializationError("BigQuery schema expected")
+          }
         }
         case Seq(JsString(typ)) if typ == "datastore" => {
-          value.asJsObject.getFields("type", "name", "definition", "kind") match {
-            case Seq(JsString(objType), JsString(name), definition, JsString(kind)) =>
-              DatastoreSchemaType(`type` = objType, name = name, kind = kind, definition = definition.convertTo[Definition])
-            case Seq(JsString(objType), JsString(name), JsString(kind)) =>
-              DatastoreSchemalessSchemaType(`type` = objType, name = name, kind = kind)
-            case _ => deserializationError("Datastore expected")
+          value.asJsObject.getFields("type", "name", "version", "definition") match {
+            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
+              DatastoreSchema(`type` = objType, name = name, version = version, definition = definition.convertTo[Definition])
+            case _ => deserializationError("Datastore schema expected")
           }
         }
-        case _ => deserializationError("SchemaType expected")
+        case _ => deserializationError("Schema expected")
       }
     }
   }
 
   implicit val transformationOpFormat = jsonFormat4(TransformationOp)
-  implicit val sinkOpFormat = jsonFormat3(SinkOp)
-  implicit val sourceOpFormat = jsonFormat3(SourceOp)
+  implicit val sinkOpFormat = jsonFormat4(SinkOp)
+  implicit val sourceOpFormat = jsonFormat4(SourceOp)
 
   implicit object OpJsonFormat extends RootJsonFormat[OpType] {
 
@@ -192,16 +232,18 @@ object SOTMacroJsonConfig {
     def read(value: JsValue): OpType = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "source" => {
-          value.asJsObject.getFields("type", "name", "schema") match {
-            case Seq(JsString(objType), JsString(name), JsString(schema)) =>
-              SourceOp(`type` = objType, name = name, schema = schema)
+          value.asJsObject.getFields("type", "name", "schema", "source") match {
+            case Seq(JsString(objType), JsString(name), JsString(schema), JsString(source)) =>
+              SourceOp(`type` = objType, name = name, schema = schema, source = source)
             case _ => deserializationError("SourceOp type expected")
           }
         }
         case Seq(JsString(typ)) if typ == "sink" => {
           value.asJsObject.getFields("type", "name", "schema") match {
-            case Seq(JsString(objType), JsString(name), JsString(schema)) =>
-              SinkOp(`type` = objType, name = name, schema = schema)
+            case Seq(JsString(objType), JsString(name), JsString(schema), JsString(source)) =>
+              SinkOp(`type` = objType, name = name, schema = schema, source = Some(source))
+            case Seq(JsString(objType), JsString(name), JsString(schema), JsString(source)) =>
+              SinkOp(`type` = objType, name = name, schema = schema, source = None)
             case _ => deserializationError("SinkOp type expected")
           }
         }
@@ -217,16 +259,14 @@ object SOTMacroJsonConfig {
     }
   }
 
-
   implicit val dagFormat = jsonFormat2(DAGMapping)
-  implicit val configFormat = jsonFormat3(Config)
+  implicit val configFormat = jsonFormat6(Config)
 
   def apply(fileName: String): Config = {
     val stream: InputStream = getClass.getResourceAsStream("/" + fileName)
     val source = scala.io.Source.fromInputStream(stream)
     val lines = try source.mkString finally source.close()
     val config = lines.parseJson.convertTo[Config]
-
     config
   }
 }

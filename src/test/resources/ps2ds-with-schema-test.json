@@ -1,9 +1,11 @@
 {
+  "name": "schemaname",
+  "version": "version1",
   "schemas": [
     {
-      "type": "pubsub",
-      "name": "pubsub1",
-      "topic": "p2pin",
+      "type": "avro",
+      "name": "avroschema1",
+      "version": "version2",
       "definition": {
         "type": "record",
         "name": "Message",
@@ -40,8 +42,8 @@
     },
     {
       "type": "datastore",
-      "kind": "kind1",
       "name": "datastore1",
+      "version": "version1",
       "definition": {
         "type": "datastoredefinition",
         "name": "OutSchema",
@@ -62,11 +64,24 @@
       }
     }
   ],
+  "sources": [
+    {
+      "type": "pubsub",
+      "name": "pubsubsource1",
+      "topic": "p2pin"
+    },
+    {
+      "type": "datastore",
+      "name": "datastoresource1",
+      "kind": "kind1"
+    }
+  ],
   "steps": [
     {
       "type": "source",
       "name": "in",
-      "schema": "pubsub1"
+      "schema": "avroschema1",
+      "source": "pubsubsource1"
     },
     {
       "type": "transformation",
@@ -95,7 +110,8 @@
     {
       "type": "sink",
       "name": "out",
-      "schema": "datastore1"
+      "schema": "datastore1",
+      "source": "datastoresource1"
     }
   ],
   "dag": [

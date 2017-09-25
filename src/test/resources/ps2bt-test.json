@@ -1,9 +1,11 @@
 {
+  "name": "schemaname",
+  "version": "version1",
   "schemas": [
     {
-      "type": "pubsub",
-      "name": "pubsub1",
-      "topic": "p2pin",
+      "type": "avro",
+      "name": "avroschema1",
+      "version": "version2",
       "definition": {
         "type": "record",
         "name": "Message",
@@ -37,23 +39,29 @@
         ],
         "doc": "A basic schema for storing user records"
       }
+    }
+  ],
+  "sources": [
+    {
+      "type": "pubsub",
+      "name": "pubsubsource1",
+      "topic": "p2pout"
     },
     {
       "type": "bigtable",
-      "name": "bigtable1",
+      "name": "bigtablesource1",
       "instanceId": "bigtable-test",
       "tableId": "bigquerytest",
       "numNodes": 3,
-      "familyName": [
-        "cf"
-      ]
+      "familyName": ["cf"]
     }
   ],
   "steps": [
     {
       "type": "source",
       "name": "in",
-      "schema": "pubsub1"
+      "schema": "avroschema1",
+      "source": "pubsubsource1"
     },
     {
       "type": "transformation",
@@ -82,7 +90,7 @@
     {
       "type": "sink",
       "name": "out",
-      "schema": "bigtable1"
+      "source": "bigtablesource1"
     }
   ],
   "dag": [

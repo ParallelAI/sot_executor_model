@@ -1,9 +1,11 @@
 {
+  "name": "schemaname",
+  "version": "version1",
   "schemas": [
     {
-      "type": "pubsub",
-      "name": "pubsub1",
-      "topic": "p2pout",
+      "type": "avro",
+      "name": "avroschema1",
+      "version": "version2",
       "definition": {
         "type": "record",
         "name": "MessageExtended",
@@ -46,8 +48,7 @@
     {
       "type": "bigquery",
       "name": "bigquery1",
-      "dataset": "bigquerytest",
-      "table": "streaming_word_extract26",
+      "version": "version3",
       "definition": {
         "type": "bigquerydefinition",
         "name": "BigQueryRow",
@@ -71,12 +72,25 @@
       }
     }
   ],
+  "sources" : [
+    {
+      "type": "pubsub",
+      "name":  "pubsubsource1",
+      "topic": "p2pout"
+    },
+    {
+      "type": "bigquery",
+      "name" : "bigquerysource1",
+      "dataset": "bigquerytest",
+      "table": "streaming_word_extract26"
+    }
+  ],
   "steps": [
     {
       "type": "source",
       "name": "in",
-      "schema": "pubsub1"
-
+      "schema": "avroschema1",
+      "source": "pubsubsource1"
     },
     {
       "type": "transformation",
@@ -105,7 +119,8 @@
     {
       "type": "sink",
       "name": "out",
-      "schema": "bigquery1"
+      "schema": "bigqueryschema1",
+      "source": "bigquerysource1"
     }
   ],
   "dag": [
