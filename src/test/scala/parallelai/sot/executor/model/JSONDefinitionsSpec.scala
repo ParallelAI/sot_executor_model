@@ -81,8 +81,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema),
         BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", definition = schemaOut))
 
-      val sources = List(PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
-        BigQuerySource(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26"))
+      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
+        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26"))
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -101,7 +101,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(name = "schemaname", version = "version1", schemas = schemas,
-        sources = sources, dag = dag, steps = steps)
+        taps = sources, dag = dag, steps = steps)
       expectedConfig should be(config)
 
     }
@@ -150,8 +150,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val schemas = List(inSchema)
 
-      val sources = List(PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
-        BigTableSource(`type` = "bigtable", id = "bigtablesource1", instanceId = "bigtable-test",
+      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
+        BigTableTapDefinition(`type` = "bigtable", id = "bigtablesource1", instanceId = "bigtable-test",
           tableId = "bigquerytest", familyName = List("cf"), numNodes = 3))
 
       val dag = List(
@@ -172,7 +172,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(name = "schemaname", version = "version1",
-        sources = sources, schemas = schemas, dag = dag, steps = steps)
+        taps = sources, schemas = schemas, dag = dag, steps = steps)
       expectedConfig should be(config)
 
     }
@@ -265,8 +265,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(inSchema, outSchema)
 
       val sources = List(
-        PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
-        PubSubSource(`type` = "pubsub", id = "pubsubsource2", topic = "p2pout")
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource2", topic = "p2pout")
       )
 
       val dag = List(
@@ -280,7 +280,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
         SinkOp(`type` = "sink", name = "out", schema = Some("avroschema2"), source = "pubsubsource2")
       )
 
-      val expectedConfig = Config(name = "schemaname", version = "version1", sources = sources,
+      val expectedConfig = Config(name = "schemaname", version = "version1", taps = sources,
         schemas = schemas, dag = dag, steps = steps)
       expectedConfig should be(config)
 
@@ -331,8 +331,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(inSchema)
 
       val sources = List(
-        PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
-        DatastoreSource(`type` = "datastore", id = "datastoresource1", kind = "kind1")
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
+        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1")
       )
 
       val dag = List(
@@ -353,7 +353,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(name = "schemaname", version = "version1",
-        sources = sources, schemas = schemas, dag = dag, steps = steps)
+        taps = sources, schemas = schemas, dag = dag, steps = steps)
       expectedConfig should be(config)
 
     }
@@ -426,8 +426,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(inSchema, outSchema)
 
       val sources = List(
-        PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
-        DatastoreSource(`type` = "datastore", id = "datastoresource1", kind = "kind1")
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
+        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1")
       )
 
       val dag = List(
@@ -448,7 +448,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(name = "schemaname", version = "version1",
-        sources = sources, schemas = schemas, dag = dag, steps = steps)
+        taps = sources, schemas = schemas, dag = dag, steps = steps)
       expectedConfig should be(config)
 
     }

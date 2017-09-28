@@ -1,6 +1,7 @@
 package parallelai.sot.executor.model
 
-import parallelai.sot.executor.model.SOTMacroConfig.{Source => SOTSource, _}
+import parallelai.sot.executor.model.SOTMacroConfig.Config
+
 
 object ConfigHelper {
 

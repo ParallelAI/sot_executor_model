@@ -26,7 +26,7 @@ object SOTMacroConfig {
     def definition: Definition
   }
 
-  sealed trait Source {
+  sealed trait TapDefinition {
     def `type`: String
 
     def id: String
@@ -49,17 +49,17 @@ object SOTMacroConfig {
   case class DatastoreSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
 
   /** Source Types **/
-  case class PubSubSource(`type`: String, id: String, topic: String) extends Source
+  case class PubSubTapDefinition(`type`: String, id: String, topic: String) extends TapDefinition
 
-  case class BigQuerySource(`type`: String, id: String, dataset: String, table: String) extends Source
+  case class BigQueryTapDefinition(`type`: String, id: String, dataset: String, table: String) extends TapDefinition
 
-  case class BigTableSource(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends Source
+  case class BigTableTapDefinition(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends TapDefinition
 
-  case class DatastoreSource(`type`: String, id: String, kind: String) extends Source
+  case class DatastoreTapDefinition(`type`: String, id: String, kind: String) extends TapDefinition
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
-  case class Config(name: String, version: String, schemas: List[Schema], sources: List[Source],
+  case class Config(name: String, version: String, schemas: List[Schema], taps: List[TapDefinition],
                     dag: List[DAGMapping], steps: List[OpType]) {
 
     def parseDAG(): Topology[String, DAGMapping] = {
@@ -127,46 +127,46 @@ object SOTMacroJsonConfig {
     }
   }
 
-  implicit val pubSubSourceDefinition = jsonFormat3(PubSubSource)
-  implicit val bigQuerySourceFormat = jsonFormat4(BigQuerySource)
-  implicit val bigTableSourceFormat = jsonFormat6(BigTableSource)
-  implicit val datastoreSource = jsonFormat3(DatastoreSource)
+  implicit val pubSubSourceDefinition = jsonFormat3(PubSubTapDefinition)
+  implicit val bigQuerySourceFormat = jsonFormat4(BigQueryTapDefinition)
+  implicit val bigTableSourceFormat = jsonFormat6(BigTableTapDefinition)
+  implicit val datastoreSource = jsonFormat3(DatastoreTapDefinition)
 
-  implicit object SourceJsonFormat extends RootJsonFormat[Source] {
+  implicit object SourceJsonFormat extends RootJsonFormat[TapDefinition] {
 
-    def write(s: Source): JsValue =
+    def write(s: TapDefinition): JsValue =
       s match {
-        case j: PubSubSource => j.toJson
-        case j: BigQuerySource => j.toJson
-        case j: BigTableSource => j.toJson
-        case j: DatastoreSource => j.toJson
+        case j: PubSubTapDefinition => j.toJson
+        case j: BigQueryTapDefinition => j.toJson
+        case j: BigTableTapDefinition => j.toJson
+        case j: DatastoreTapDefinition => j.toJson
       }
 
-    def read(value: JsValue): Source = {
+    def read(value: JsValue): TapDefinition = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "pubsub" =>
           value.asJsObject.getFields("type", "id", "topic") match {
             case Seq(JsString(objType), JsString(name), JsString(topic)) =>
-              PubSubSource(`type` = objType, id = name, topic = topic)
+              PubSubTapDefinition(`type` = objType, id = name, topic = topic)
             case _ => deserializationError("Pubsub source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
           value.asJsObject.getFields("type", "id", "dataset", "table") match {
             case Seq(JsString(objType), JsString(name), JsString(dataset), JsString(table)) =>
-              BigQuerySource(`type` = objType, id = name, dataset = dataset, table = table)
+              BigQueryTapDefinition(`type` = objType, id = name, dataset = dataset, table = table)
             case _ => deserializationError("BigQuery source expected")
           }
         case Seq(JsString(typ)) if typ == "bigtable" =>
           value.asJsObject.getFields("type", "id", "instanceId", "tableId", "familyName", "numNodes") match {
             case Seq(JsString(objType), JsString(name), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
               val fn = familyName.convertTo[List[String]]
-              BigTableSource(`type` = objType, id = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
+              BigTableTapDefinition(`type` = objType, id = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
             case _ => deserializationError("BigTable source expected")
           }
         case Seq(JsString(typ)) if typ == "datastore" =>
           value.asJsObject.getFields("type", "id", "kind") match {
             case Seq(JsString(objType), JsString(name), JsString(kind)) =>
-              DatastoreSource(`type` = objType, id = name, kind = kind)
+              DatastoreTapDefinition(`type` = objType, id = name, kind = kind)
             case _ => deserializationError("Datastore source expected")
           }
         case _ => deserializationError("Source expected")

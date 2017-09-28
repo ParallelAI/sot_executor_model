@@ -41,7 +41,7 @@
       }
     }
   ],
-  "sources": [
+  "taps": [
     {
       "type": "pubsub",
       "id": "pubsubsource1",
