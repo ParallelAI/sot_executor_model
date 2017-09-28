@@ -19,7 +19,7 @@ object SOTMacroConfig {
   sealed trait Schema {
     def `type`: String
 
-    def name: String
+    def id: String
 
     def version: String
 
@@ -29,7 +29,7 @@ object SOTMacroConfig {
   sealed trait Source {
     def `type`: String
 
-    def name: String
+    def id: String
   }
 
   /** Schema Definitions **/
@@ -42,20 +42,20 @@ object SOTMacroConfig {
   case class DatastoreDefinition(`type`: String, name: String, fields: List[DatastoreDefinitionField]) extends Definition
 
   /** Schema Types **/
-  case class AvroSchema(`type`: String, name: String, version: String, definition: Definition) extends Schema
+  case class AvroSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
 
-  case class BigQuerySchema(`type`: String, name: String, version: String, definition: Definition) extends Schema
+  case class BigQuerySchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
 
-  case class DatastoreSchema(`type`: String, name: String, version: String, definition: Definition) extends Schema
+  case class DatastoreSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
 
   /** Source Types **/
-  case class PubSubSource(`type`: String, name: String, topic: String) extends Source
+  case class PubSubSource(`type`: String, id: String, topic: String) extends Source
 
-  case class BigQuerySource(`type`: String, name: String, dataset: String, table: String) extends Source
+  case class BigQuerySource(`type`: String, id: String, dataset: String, table: String) extends Source
 
-  case class BigTableSource(`type`: String, name: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends Source
+  case class BigTableSource(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends Source
 
-  case class DatastoreSource(`type`: String, name: String, kind: String) extends Source
+  case class DatastoreSource(`type`: String, id: String, kind: String) extends Source
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
@@ -147,26 +147,26 @@ object SOTMacroJsonConfig {
         case Seq(JsString(typ)) if typ == "pubsub" =>
           value.asJsObject.getFields("type", "name", "topic") match {
             case Seq(JsString(objType), JsString(name), JsString(topic)) =>
-              PubSubSource(`type` = objType, name = name, topic = topic)
+              PubSubSource(`type` = objType, id = name, topic = topic)
             case _ => deserializationError("Pubsub source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
           value.asJsObject.getFields("type", "name", "dataset", "table") match {
             case Seq(JsString(objType), JsString(name), JsString(dataset), JsString(table)) =>
-              BigQuerySource(`type` = objType, name = name, dataset = dataset, table = table)
+              BigQuerySource(`type` = objType, id = name, dataset = dataset, table = table)
             case _ => deserializationError("BigQuery source expected")
           }
         case Seq(JsString(typ)) if typ == "bigtable" =>
           value.asJsObject.getFields("type", "name", "instanceId", "tableId", "familyName", "numNodes") match {
             case Seq(JsString(objType), JsString(name), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
               val fn = familyName.convertTo[List[String]]
-              BigTableSource(`type` = objType, name = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
+              BigTableSource(`type` = objType, id = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
             case _ => deserializationError("BigTable source expected")
           }
         case Seq(JsString(typ)) if typ == "datastore" =>
           value.asJsObject.getFields("type", "name", "kind") match {
             case Seq(JsString(objType), JsString(name), JsString(kind)) =>
-              DatastoreSource(`type` = objType, name = name, kind = kind)
+              DatastoreSource(`type` = objType, id = name, kind = kind)
             case _ => deserializationError("Datastore source expected")
           }
         case _ => deserializationError("Source expected")
@@ -192,21 +192,21 @@ object SOTMacroJsonConfig {
         case Seq(JsString(typ)) if typ == "avro" => {
           value.asJsObject.getFields("type", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
-              AvroSchema(`type` = objType, name = name, version = version, definition = definition.convertTo[Definition])
+              AvroSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Avro schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "bigquery" => {
           value.asJsObject.getFields("type", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
-              BigQuerySchema(`type` = objType, name = name, version = version, definition = definition.convertTo[Definition])
+              BigQuerySchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("BigQuery schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "datastore" => {
           value.asJsObject.getFields("type", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
-              DatastoreSchema(`type` = objType, name = name, version = version, definition = definition.convertTo[Definition])
+              DatastoreSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Datastore schema expected")
           }
         }
@@ -268,7 +268,6 @@ object SOTMacroJsonConfig {
     val lines = try source.mkString finally source.close()
     val config = lines.parseJson.convertTo[Config]
     ConfigHelper.validate(config)
-
     config
   }
 }

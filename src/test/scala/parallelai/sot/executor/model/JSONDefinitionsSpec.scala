@@ -78,11 +78,11 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[BigQueryDefinition]
 
-      val schemas = List(AvroSchema(`type` = "avro", name = "avroschema1", version = "version2", definition = schema),
-        BigQuerySchema(`type` = "bigquery", version = "version3", name = "bigqueryschema1", definition = schemaOut))
+      val schemas = List(AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema),
+        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", definition = schemaOut))
 
-      val sources = List(PubSubSource(`type` = "pubsub", name = "pubsubsource1", topic = "p2pout"),
-        BigQuerySource(`type` = "bigquery", name = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26"))
+      val sources = List(PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
+        BigQuerySource(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26"))
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -146,12 +146,12 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |}
         """.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = AvroSchema(`type` = "avro", name = "avroschema1", version = "version2", definition = schema1)
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema1)
 
       val schemas = List(inSchema)
 
-      val sources = List(PubSubSource(`type` = "pubsub", name = "pubsubsource1", topic = "p2pout"),
-        BigTableSource(`type` = "bigtable", name = "bigtablesource1", instanceId = "bigtable-test",
+      val sources = List(PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
+        BigTableSource(`type` = "bigtable", id = "bigtablesource1", instanceId = "bigtable-test",
           tableId = "bigquerytest", familyName = List("cf"), numNodes = 3))
 
       val dag = List(
@@ -259,14 +259,14 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = AvroSchema(`type` = "avro", name = "avroschema1", version = "version2", definition = schema1)
-      val outSchema = AvroSchema(`type` = "avro", name = "avroschema2", version = "version2", definition = schema2)
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema1)
+      val outSchema = AvroSchema(`type` = "avro", id = "avroschema2", version = "version2", definition = schema2)
 
       val schemas = List(inSchema, outSchema)
 
       val sources = List(
-        PubSubSource(`type` = "pubsub", name = "pubsubsource1", topic = "p2pin"),
-        PubSubSource(`type` = "pubsub", name = "pubsubsource2", topic = "p2pout")
+        PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
+        PubSubSource(`type` = "pubsub", id = "pubsubsource2", topic = "p2pout")
       )
 
       val dag = List(
@@ -326,13 +326,13 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = AvroSchema(`type` = "avro", name = "avroschema1", version = "version2", definition = schema1)
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema1)
 
       val schemas = List(inSchema)
 
       val sources = List(
-        PubSubSource(`type` = "pubsub", name = "pubsubsource1", topic = "p2pin"),
-        DatastoreSource(`type` = "datastore", name = "datastoresource1", kind = "kind1")
+        PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
+        DatastoreSource(`type` = "datastore", id = "datastoresource1", kind = "kind1")
       )
 
       val dag = List(
@@ -420,14 +420,14 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[DatastoreDefinition]
 
-      val inSchema = AvroSchema(`type` = "avro", name = "avroschema1", version = "version2", definition = def1)
-      val outSchema = DatastoreSchema(`type` = "datastore", name = "datastore1", version = "version3", definition = def2)
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = def1)
+      val outSchema = DatastoreSchema(`type` = "datastore", id = "datastore1", version = "version3", definition = def2)
 
       val schemas = List(inSchema, outSchema)
 
       val sources = List(
-        PubSubSource(`type` = "pubsub", name = "pubsubsource1", topic = "p2pin"),
-        DatastoreSource(`type` = "datastore", name = "datastoresource1", kind = "kind1")
+        PubSubSource(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
+        DatastoreSource(`type` = "datastore", id = "datastoresource1", kind = "kind1")
       )
 
       val dag = List(
