@@ -145,26 +145,26 @@ object SOTMacroJsonConfig {
     def read(value: JsValue): Source = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "pubsub" =>
-          value.asJsObject.getFields("type", "name", "topic") match {
+          value.asJsObject.getFields("type", "id", "topic") match {
             case Seq(JsString(objType), JsString(name), JsString(topic)) =>
               PubSubSource(`type` = objType, id = name, topic = topic)
             case _ => deserializationError("Pubsub source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
-          value.asJsObject.getFields("type", "name", "dataset", "table") match {
+          value.asJsObject.getFields("type", "id", "dataset", "table") match {
             case Seq(JsString(objType), JsString(name), JsString(dataset), JsString(table)) =>
               BigQuerySource(`type` = objType, id = name, dataset = dataset, table = table)
             case _ => deserializationError("BigQuery source expected")
           }
         case Seq(JsString(typ)) if typ == "bigtable" =>
-          value.asJsObject.getFields("type", "name", "instanceId", "tableId", "familyName", "numNodes") match {
+          value.asJsObject.getFields("type", "id", "instanceId", "tableId", "familyName", "numNodes") match {
             case Seq(JsString(objType), JsString(name), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
               val fn = familyName.convertTo[List[String]]
               BigTableSource(`type` = objType, id = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
             case _ => deserializationError("BigTable source expected")
           }
         case Seq(JsString(typ)) if typ == "datastore" =>
-          value.asJsObject.getFields("type", "name", "kind") match {
+          value.asJsObject.getFields("type", "id", "kind") match {
             case Seq(JsString(objType), JsString(name), JsString(kind)) =>
               DatastoreSource(`type` = objType, id = name, kind = kind)
             case _ => deserializationError("Datastore source expected")
@@ -190,21 +190,21 @@ object SOTMacroJsonConfig {
     def read(value: JsValue): Schema = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "avro" => {
-          value.asJsObject.getFields("type", "name", "version", "definition") match {
+          value.asJsObject.getFields("type", "id", "version", "definition") match {
             case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
               AvroSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Avro schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "bigquery" => {
-          value.asJsObject.getFields("type", "name", "version", "definition") match {
+          value.asJsObject.getFields("type", "id", "version", "definition") match {
             case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
               BigQuerySchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("BigQuery schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "datastore" => {
-          value.asJsObject.getFields("type", "name", "version", "definition") match {
+          value.asJsObject.getFields("type", "id", "version", "definition") match {
             case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
               DatastoreSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Datastore schema expected")
