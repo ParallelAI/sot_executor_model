@@ -267,6 +267,8 @@ object SOTMacroJsonConfig {
     val source = scala.io.Source.fromInputStream(stream)
     val lines = try source.mkString finally source.close()
     val config = lines.parseJson.convertTo[Config]
+    ConfigHelper.validate(config)
+
     config
   }
 }
