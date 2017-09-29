@@ -77,9 +77,9 @@ object SOTMacroConfig {
 
   case class TransformationOp(`type`: String, name: String, op: String, func: String) extends OpType
 
-  case class SourceOp(`type`: String, name: String, schema: String, source: String) extends OpType
+  case class SourceOp(`type`: String, name: String, schema: String, tap: String) extends OpType
 
-  case class SinkOp(`type`: String, name: String, schema: Option[String], source: String) extends OpType
+  case class SinkOp(`type`: String, name: String, schema: Option[String], tap: String) extends OpType
 
 }
 
@@ -234,16 +234,16 @@ object SOTMacroJsonConfig {
         case Seq(JsString(typ)) if typ == "source" => {
           value.asJsObject.getFields("type", "name", "schema", "source") match {
             case Seq(JsString(objType), JsString(name), JsString(schema), JsString(source)) =>
-              SourceOp(`type` = objType, name = name, schema = schema, source = source)
+              SourceOp(`type` = objType, name = name, schema = schema, tap = source)
             case _ => deserializationError("SourceOp type expected")
           }
         }
         case Seq(JsString(typ)) if typ == "sink" => {
           value.asJsObject.getFields("type", "name", "source", "schema") match {
             case Seq(JsString(objType), JsString(name), JsString(source), JsString(schema)) =>
-              SinkOp(`type` = objType, name = name, schema = Some(schema), source = source)
+              SinkOp(`type` = objType, name = name, schema = Some(schema), tap = source)
             case Seq(JsString(objType), JsString(name), JsString(source)) =>
-              SinkOp(`type` = objType, name = name, schema = None, source = source)
+              SinkOp(`type` = objType, name = name, schema = None, tap = source)
             case _ => deserializationError("SinkOp type expected")
           }
         }
