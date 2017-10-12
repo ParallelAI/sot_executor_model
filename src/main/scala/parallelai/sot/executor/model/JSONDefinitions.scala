@@ -41,8 +41,14 @@ object SOTMacroConfig {
 
   case class DatastoreDefinition(`type`: String, name: String, fields: List[DatastoreDefinitionField]) extends Definition
 
+  case class ProtobufDefinition(`type`: String, name: String, fields: List[ProtobufDefinitionField]) extends Definition
+
+  case class ProtobufDefinitionField(mode: String, `type`: String, name: String)
+
   /** Schema Types **/
   case class AvroSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
+
+  case class ProtobufSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
 
   case class BigQuerySchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
 
@@ -88,6 +94,8 @@ object SOTMacroJsonConfig {
   import SOTMacroConfig._
 
   implicit val avroDefinitionFormat = jsonFormat4(AvroDefinition)
+  implicit val protobufDefinitionFieldFormat = jsonFormat3(ProtobufDefinitionField)
+  implicit val protobufDefinitionFormat = jsonFormat3(ProtobufDefinition)
   implicit val bigQueryDefinitionFormat = jsonFormat3(BigQueryDefinition)
   implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
   implicit val datastoreDefinitionFormat = jsonFormat3(DatastoreDefinition)
@@ -97,6 +105,7 @@ object SOTMacroJsonConfig {
     def write(c: Definition): JsValue =
       c match {
         case s: AvroDefinition => s.toJson
+        case s: ProtobufDefinition => s.toJson
         case s: BigQueryDefinition => s.toJson
         case s: DatastoreDefinition => s.toJson
       }
@@ -122,15 +131,22 @@ object SOTMacroJsonConfig {
               DatastoreDefinition(`type` = typ, name = name, fields = fl)
             case _ => deserializationError("DatastoreDefinition is expected")
           }
+        case Seq(JsString(typ)) if typ == "protobufdefinition" =>
+          value.asJsObject.getFields("type", "name", "fields") match {
+            case Seq(JsString(typ), JsString(name), JsArray(fields)) =>
+              val fl = fields.map(_.convertTo[ProtobufDefinitionField]).toList
+              ProtobufDefinition(`type` = typ, name = name, fields = fl)
+            case _ => deserializationError("ProtobufDefinition is expected")
+          }
         case _ => deserializationError("Unsupported definition")
       }
     }
   }
 
-  implicit val pubSubSourceDefinition = jsonFormat3(PubSubTapDefinition)
-  implicit val bigQuerySourceFormat = jsonFormat4(BigQueryTapDefinition)
-  implicit val bigTableSourceFormat = jsonFormat6(BigTableTapDefinition)
-  implicit val datastoreSource = jsonFormat3(DatastoreTapDefinition)
+  implicit val pubSubTapDefinition = jsonFormat3(PubSubTapDefinition)
+  implicit val bigQueryTapDefinition = jsonFormat4(BigQueryTapDefinition)
+  implicit val bigTableTapDefinition = jsonFormat6(BigTableTapDefinition)
+  implicit val datastoreTapDefinition = jsonFormat3(DatastoreTapDefinition)
 
   implicit object SourceJsonFormat extends RootJsonFormat[TapDefinition] {
 
@@ -175,6 +191,7 @@ object SOTMacroJsonConfig {
   }
 
   implicit val avroSchemaFormat = jsonFormat4(AvroSchema)
+  implicit val protobufSchemaFormat = jsonFormat4(ProtobufSchema)
   implicit val bigQuerySchemaFormat = jsonFormat4(BigQuerySchema)
   implicit val datastoreSchemaFormat = jsonFormat4(DatastoreSchema)
 
@@ -183,6 +200,7 @@ object SOTMacroJsonConfig {
     def write(c: Schema): JsValue =
       c match {
         case s: AvroSchema => s.toJson
+        case s: ProtobufSchema => s.toJson
         case s: BigQuerySchema => s.toJson
         case s: DatastoreSchema => s.toJson
       }
@@ -194,6 +212,13 @@ object SOTMacroJsonConfig {
             case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
               AvroSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Avro schema expected")
+          }
+        }
+        case Seq(JsString(typ)) if typ == "protobuf" => {
+          value.asJsObject.getFields("type", "id", "version", "definition") match {
+            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
+              ProtobufSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
+            case _ => deserializationError("Protobuf schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "bigquery" => {
