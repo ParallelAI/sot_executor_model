@@ -34,8 +34,7 @@ class TopologySpec extends WordSpec with Matchers with BeforeAndAfterAll{
 
     top = Topology.createTopology(vs, es)
 
-    val path = getClass.getResource("/ps2ds-test.json").getPath
-    val config = SOTMacroJsonConfig(path)
+    val config = SOTMacroJsonConfig("ps2ds-test.json")
     topFromFile = config.parseDAG()
 
   }

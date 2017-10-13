@@ -287,8 +287,8 @@ object SOTMacroJsonConfig {
   implicit val dagFormat = jsonFormat2(DAGMapping)
   implicit val configFormat = jsonFormat6(Config)
 
-  def apply(path: String): Config = {
-    val stream: InputStream = new FileInputStream(new File(path))
+  def apply(fileName: String): Config = {
+    val stream: InputStream = getClass.getResourceAsStream("/" + fileName)
     val source = scala.io.Source.fromInputStream(stream)
     val lines = try source.mkString finally source.close()
     val config = lines.parseJson.convertTo[Config]
