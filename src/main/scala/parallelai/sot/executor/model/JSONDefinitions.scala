@@ -1,6 +1,6 @@
 package parallelai.sot.executor.model
 
-import java.io.InputStream
+import java.io.{File, FileInputStream, InputStream}
 
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -287,8 +287,8 @@ object SOTMacroJsonConfig {
   implicit val dagFormat = jsonFormat2(DAGMapping)
   implicit val configFormat = jsonFormat6(Config)
 
-  def apply(fileName: String): Config = {
-    val stream: InputStream = getClass.getResourceAsStream("/" + fileName)
+  def apply(path: String): Config = {
+    val stream: InputStream = new FileInputStream(new File(path))
     val source = scala.io.Source.fromInputStream(stream)
     val lines = try source.mkString finally source.close()
     val config = lines.parseJson.convertTo[Config]

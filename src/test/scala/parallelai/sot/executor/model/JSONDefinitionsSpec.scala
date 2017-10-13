@@ -10,7 +10,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
   "SOTMacroConfig" should {
 
     "build pubsub to bigquery config" in {
-      val config = SOTMacroJsonConfig("ps2bq-test.json")
+      val path = getClass.getResource("/ps2bq-test.json").getPath
+      val config = SOTMacroJsonConfig(path)
       val schema =
         """
           |{
@@ -107,7 +108,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
     }
 
     "build pubsub with protobuf to bigquery config" in {
-      val config = SOTMacroJsonConfig("psproto2bq-test.json")
+      val path = getClass.getResource("/psproto2bq-test.json").getPath
+      val config = SOTMacroJsonConfig(path)
       val schema =
         """
           |{
@@ -202,7 +204,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
     }
 
     "build pubsub to bigtable config" in {
-      val config = SOTMacroJsonConfig("ps2bt-test.json")
+      val path = getClass.getResource("/ps2bt-test.json").getPath
+      val config = SOTMacroJsonConfig(path)
 
       val schema1 =
         """
@@ -273,7 +276,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
     }
 
     "build pubsub to pubsub config" in {
-      val config = SOTMacroJsonConfig("ps2ps-test.json")
+      val path = getClass.getResource("/ps2ps-test.json").getPath
+      val config = SOTMacroJsonConfig(path)
 
       val schema1 =
         """
@@ -382,7 +386,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
     }
 
     "build pubsub to datastore config" in {
-      val config = SOTMacroJsonConfig("ps2ds-test.json")
+      val path = getClass.getResource("/ps2ds-test.json").getPath
+      val config = SOTMacroJsonConfig(path)
 
       val schema1 =
         """
@@ -455,7 +460,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
     "build pubsub to datastore with schema config" in {
 
-      val config = SOTMacroJsonConfig("ps2ds-with-schema-test.json")
+      val path = getClass.getResource("/ps2ds-with-schema-test.json").getPath
+      val config = SOTMacroJsonConfig(path)
 
       val def1 =
         """
