@@ -45,6 +45,9 @@ object SOTMacroConfig {
 
   case class ProtobufDefinitionField(mode: String, `type`: String, name: String)
 
+  case class ByteArrayDefinition(`type`: String, name: String) extends Definition
+
+
   /** Schema Types **/
   case class AvroSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
 
@@ -54,10 +57,12 @@ object SOTMacroConfig {
 
   case class DatastoreSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
 
+  case class ByteArraySchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
+
   /** Source Types **/
   case class PubSubTapDefinition(`type`: String, id: String, topic: String) extends TapDefinition
 
-  case class GoogleStoreTapDefinition(`type`: String, id: String, path: String) extends TapDefinition
+  case class GoogleStoreTapDefinition(`type`: String, id: String, bucket: String, blob: String) extends TapDefinition
 
   case class BigQueryTapDefinition(`type`: String, id: String, dataset: String, table: String) extends TapDefinition
 
@@ -98,6 +103,7 @@ object SOTMacroJsonConfig {
   implicit val avroDefinitionFormat = jsonFormat4(AvroDefinition)
   implicit val protobufDefinitionFieldFormat = jsonFormat3(ProtobufDefinitionField)
   implicit val protobufDefinitionFormat = jsonFormat3(ProtobufDefinition)
+  implicit val bytearrayDefinitionFormat = jsonFormat2(ByteArrayDefinition)
   implicit val bigQueryDefinitionFormat = jsonFormat3(BigQueryDefinition)
   implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
   implicit val datastoreDefinitionFormat = jsonFormat3(DatastoreDefinition)
@@ -108,6 +114,7 @@ object SOTMacroJsonConfig {
       c match {
         case s: AvroDefinition => s.toJson
         case s: ProtobufDefinition => s.toJson
+        case s: ByteArrayDefinition => s.toJson
         case s: BigQueryDefinition => s.toJson
         case s: DatastoreDefinition => s.toJson
       }
@@ -140,13 +147,19 @@ object SOTMacroJsonConfig {
               ProtobufDefinition(`type` = typ, name = name, fields = fl)
             case _ => deserializationError("ProtobufDefinition is expected")
           }
+        case Seq(JsString(typ)) if typ == "bytearraydefinition" =>
+          value.asJsObject.getFields("type", "name") match {
+            case Seq(JsString(typ), JsString(name)) =>
+              ByteArrayDefinition(`type` = typ, name = name)
+            case _ => deserializationError("ProtobufDefinition is expected")
+          }
         case _ => deserializationError("Unsupported definition")
       }
     }
   }
 
   implicit val pubSubTapDefinition = jsonFormat3(PubSubTapDefinition)
-  implicit val googleStoreTapDefinition = jsonFormat3(GoogleStoreTapDefinition)
+  implicit val googleStoreTapDefinition = jsonFormat4(GoogleStoreTapDefinition)
   implicit val bigQueryTapDefinition = jsonFormat4(BigQueryTapDefinition)
   implicit val bigTableTapDefinition = jsonFormat6(BigTableTapDefinition)
   implicit val datastoreTapDefinition = jsonFormat3(DatastoreTapDefinition)
@@ -171,9 +184,9 @@ object SOTMacroJsonConfig {
             case _ => deserializationError("Pubsub source expected")
           }
         case Seq(JsString(typ)) if typ == "googlestore" =>
-          value.asJsObject.getFields("type", "id", "path") match {
-            case Seq(JsString(objType), JsString(name), JsString(path)) =>
-              GoogleStoreTapDefinition(`type` = objType, id = name, path = path)
+          value.asJsObject.getFields("type", "id", "bucket", "blob") match {
+            case Seq(JsString(objType), JsString(name), JsString(bucket), JsString(blob)) =>
+              GoogleStoreTapDefinition(`type` = objType, id = name, bucket = bucket, blob = blob)
             case _ => deserializationError("Pubsub source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
@@ -204,6 +217,7 @@ object SOTMacroJsonConfig {
   implicit val protobufSchemaFormat = jsonFormat4(ProtobufSchema)
   implicit val bigQuerySchemaFormat = jsonFormat4(BigQuerySchema)
   implicit val datastoreSchemaFormat = jsonFormat4(DatastoreSchema)
+  implicit val byteArraySchemaFormat = jsonFormat4(ByteArraySchema)
 
   implicit object SchemaJsonFormat extends RootJsonFormat[Schema] {
 
@@ -213,6 +227,7 @@ object SOTMacroJsonConfig {
         case s: ProtobufSchema => s.toJson
         case s: BigQuerySchema => s.toJson
         case s: DatastoreSchema => s.toJson
+        case s: ByteArraySchema => s.toJson
       }
 
     def read(value: JsValue): Schema = {
@@ -243,6 +258,13 @@ object SOTMacroJsonConfig {
             case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
               DatastoreSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Datastore schema expected")
+          }
+        }
+        case Seq(JsString(typ)) if typ == "bytearray" => {
+          value.asJsObject.getFields("type", "id", "version", "definition") match {
+            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
+              ByteArraySchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
+            case _ => deserializationError("ByteArray schema expected")
           }
         }
         case _ => deserializationError("Schema expected")
