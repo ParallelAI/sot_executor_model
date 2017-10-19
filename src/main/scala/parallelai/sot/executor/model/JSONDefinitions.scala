@@ -187,7 +187,7 @@ object SOTMacroJsonConfig {
           value.asJsObject.getFields("type", "id", "bucket", "blob") match {
             case Seq(JsString(objType), JsString(name), JsString(bucket), JsString(blob)) =>
               GoogleStoreTapDefinition(`type` = objType, id = name, bucket = bucket, blob = blob)
-            case _ => deserializationError("Pubsub source expected")
+            case _ => deserializationError("GoogleStore source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
           value.asJsObject.getFields("type", "id", "dataset", "table") match {
