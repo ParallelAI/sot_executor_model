@@ -57,6 +57,8 @@ object SOTMacroConfig {
   /** Source Types **/
   case class PubSubTapDefinition(`type`: String, id: String, topic: String) extends TapDefinition
 
+  case class GoogleStoreTapDefinition(`type`: String, id: String, path: String) extends TapDefinition
+
   case class BigQueryTapDefinition(`type`: String, id: String, dataset: String, table: String) extends TapDefinition
 
   case class BigTableTapDefinition(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends TapDefinition
@@ -144,6 +146,7 @@ object SOTMacroJsonConfig {
   }
 
   implicit val pubSubTapDefinition = jsonFormat3(PubSubTapDefinition)
+  implicit val googleStoreTapDefinition = jsonFormat3(GoogleStoreTapDefinition)
   implicit val bigQueryTapDefinition = jsonFormat4(BigQueryTapDefinition)
   implicit val bigTableTapDefinition = jsonFormat6(BigTableTapDefinition)
   implicit val datastoreTapDefinition = jsonFormat3(DatastoreTapDefinition)
@@ -153,6 +156,7 @@ object SOTMacroJsonConfig {
     def write(s: TapDefinition): JsValue =
       s match {
         case j: PubSubTapDefinition => j.toJson
+        case j: GoogleStoreTapDefinition => j.toJson
         case j: BigQueryTapDefinition => j.toJson
         case j: BigTableTapDefinition => j.toJson
         case j: DatastoreTapDefinition => j.toJson
@@ -164,6 +168,12 @@ object SOTMacroJsonConfig {
           value.asJsObject.getFields("type", "id", "topic") match {
             case Seq(JsString(objType), JsString(name), JsString(topic)) =>
               PubSubTapDefinition(`type` = objType, id = name, topic = topic)
+            case _ => deserializationError("Pubsub source expected")
+          }
+        case Seq(JsString(typ)) if typ == "googlestore" =>
+          value.asJsObject.getFields("type", "id", "path") match {
+            case Seq(JsString(objType), JsString(name), JsString(path)) =>
+              GoogleStoreTapDefinition(`type` = objType, id = name, path = path)
             case _ => deserializationError("Pubsub source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
