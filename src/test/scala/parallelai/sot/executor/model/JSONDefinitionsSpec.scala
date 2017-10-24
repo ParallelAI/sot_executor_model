@@ -113,38 +113,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |{
           |        "type": "protobufdefinition",
           |        "name": "MessageExtended",
-          |        "fields": [
-          |          {
-          |            "mode": "required",
-          |            "name": "user",
-          |            "type": "string"
-          |          },
-          |          {
-          |            "mode": "required",
-          |            "name": "teamName",
-          |            "type": "string"
-          |          },
-          |          {
-          |            "mode": "required",
-          |            "name": "score",
-          |            "type": "int"
-          |          },
-          |          {
-          |            "mode": "required",
-          |            "name": "eventTime",
-          |            "type": "long"
-          |          },
-          |          {
-          |            "mode": "required",
-          |            "name": "eventTimeStr",
-          |            "type": "string"
-          |          },
-          |          {
-          |            "mode": "required",
-          |            "name": "count",
-          |            "type": "int"
-          |          }
-          |        ]
+          |        "schemaBase64": "base64"
           |      }
         """.stripMargin.parseJson.convertTo[ProtobufDefinition]
 

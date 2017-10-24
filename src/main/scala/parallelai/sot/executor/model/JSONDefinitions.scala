@@ -41,9 +41,7 @@ object SOTMacroConfig {
 
   case class DatastoreDefinition(`type`: String, name: String, fields: List[DatastoreDefinitionField]) extends Definition
 
-  case class ProtobufDefinition(`type`: String, name: String, fields: List[ProtobufDefinitionField]) extends Definition
-
-  case class ProtobufDefinitionField(mode: String, `type`: String, name: String)
+  case class ProtobufDefinition(`type`: String, name: String, schemaBase64: String) extends Definition
 
   case class ByteArrayDefinition(`type`: String, name: String) extends Definition
 
@@ -101,7 +99,6 @@ object SOTMacroJsonConfig {
   import SOTMacroConfig._
 
   implicit val avroDefinitionFormat = jsonFormat4(AvroDefinition)
-  implicit val protobufDefinitionFieldFormat = jsonFormat3(ProtobufDefinitionField)
   implicit val protobufDefinitionFormat = jsonFormat3(ProtobufDefinition)
   implicit val bytearrayDefinitionFormat = jsonFormat2(ByteArrayDefinition)
   implicit val bigQueryDefinitionFormat = jsonFormat3(BigQueryDefinition)
@@ -141,10 +138,9 @@ object SOTMacroJsonConfig {
             case _ => deserializationError("DatastoreDefinition is expected")
           }
         case Seq(JsString(typ)) if typ == "protobufdefinition" =>
-          value.asJsObject.getFields("type", "name", "fields") match {
-            case Seq(JsString(typ), JsString(name), JsArray(fields)) =>
-              val fl = fields.map(_.convertTo[ProtobufDefinitionField]).toList
-              ProtobufDefinition(`type` = typ, name = name, fields = fl)
+          value.asJsObject.getFields("type", "name", "schemaBase64") match {
+            case Seq(JsString(typ), JsString(name), JsString(schemaBase64)) =>
+              ProtobufDefinition(`type` = typ, name = name, schemaBase64 = schemaBase64)
             case _ => deserializationError("ProtobufDefinition is expected")
           }
         case Seq(JsString(typ)) if typ == "bytearraydefinition" =>
