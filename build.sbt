@@ -6,7 +6,7 @@ lazy val root = (project in file(".")).
     inThisBuild(List(
       organization := "parallelai",
       scalaVersion := "2.11.11",
-      version      := "0.1.29"
+      version      := "0.1.30"
     )),
     name := "sot_executor_model",
     libraryDependencies ++= Seq(

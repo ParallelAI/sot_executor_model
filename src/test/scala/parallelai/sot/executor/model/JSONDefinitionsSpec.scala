@@ -82,7 +82,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
         BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", definition = schemaOut))
 
       val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
-        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26"))
+        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = Some("CREATE_NEVER")))
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -146,7 +146,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
         BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", definition = schemaOut))
 
       val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
-        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26"))
+        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = None))
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),

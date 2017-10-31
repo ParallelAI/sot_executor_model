@@ -64,7 +64,7 @@ object SOTMacroConfig {
 
   //WriteDisposition: WRITE_TRUNCATE | WRITE_APPEND | WRITE_EMPTY
   //CreateDisposition: CREATE_NEVER | CREATE_IF_NEEDED
-  case class BigQueryTapDefinition(`type`: String, id: String, dataset: String, table: String, writeDisposition: String, createDisposition: String) extends TapDefinition
+  case class BigQueryTapDefinition(`type`: String, id: String, dataset: String, table: String, writeDisposition: Option[String], createDisposition: Option[String]) extends TapDefinition
 
   case class BigTableTapDefinition(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends TapDefinition
 
@@ -188,9 +188,11 @@ object SOTMacroJsonConfig {
             case _ => deserializationError("GoogleStore source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
-          value.asJsObject.getFields("type", "id", "dataset", "table", "writeDisposition", "createDisposition") match {
-            case Seq(JsString(objType), JsString(name), JsString(dataset), JsString(table), JsString(writeDisposition), JsString(createDisposition)) =>
-              BigQueryTapDefinition(`type` = objType, id = name, dataset = dataset, table = table, writeDisposition = writeDisposition, createDisposition = createDisposition)
+          value.asJsObject.getFields("type", "id", "dataset", "table") match {
+            case Seq(objType, name, dataset, table) =>
+              BigQueryTapDefinition(`type` = objType.convertTo[String], id = name.convertTo[String],
+                dataset = dataset.convertTo[String], table = table.convertTo[String], writeDisposition = value.asJsObject.fields.get("writeDisposition").map(_.convertTo[String]),
+                createDisposition = value.asJsObject.fields.get("createDisposition").map(_.convertTo[String]))
             case _ => deserializationError("BigQuery source expected")
           }
         case Seq(JsString(typ)) if typ == "bigtable" =>

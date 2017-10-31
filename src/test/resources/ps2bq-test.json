@@ -82,7 +82,8 @@
       "type": "bigquery",
       "id" : "bigquerysource1",
       "dataset": "bigquerytest",
-      "table": "streaming_word_extract26"
+      "table": "streaming_word_extract26",
+      "createDisposition": "CREATE_NEVER"
     }
   ],
   "steps": [
