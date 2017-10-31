@@ -62,7 +62,9 @@ object SOTMacroConfig {
 
   case class GoogleStoreTapDefinition(`type`: String, id: String, bucket: String, blob: String) extends TapDefinition
 
-  case class BigQueryTapDefinition(`type`: String, id: String, dataset: String, table: String) extends TapDefinition
+  //WriteDisposition: WRITE_TRUNCATE | WRITE_APPEND | WRITE_EMPTY
+  //CreateDisposition: CREATE_NEVER | CREATE_IF_NEEDED
+  case class BigQueryTapDefinition(`type`: String, id: String, dataset: String, table: String, writeDisposition: String, createDisposition: String) extends TapDefinition
 
   case class BigTableTapDefinition(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends TapDefinition
 
@@ -156,7 +158,7 @@ object SOTMacroJsonConfig {
 
   implicit val pubSubTapDefinition = jsonFormat3(PubSubTapDefinition)
   implicit val googleStoreTapDefinition = jsonFormat4(GoogleStoreTapDefinition)
-  implicit val bigQueryTapDefinition = jsonFormat4(BigQueryTapDefinition)
+  implicit val bigQueryTapDefinition = jsonFormat6(BigQueryTapDefinition)
   implicit val bigTableTapDefinition = jsonFormat6(BigTableTapDefinition)
   implicit val datastoreTapDefinition = jsonFormat3(DatastoreTapDefinition)
 
@@ -186,9 +188,9 @@ object SOTMacroJsonConfig {
             case _ => deserializationError("GoogleStore source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
-          value.asJsObject.getFields("type", "id", "dataset", "table") match {
-            case Seq(JsString(objType), JsString(name), JsString(dataset), JsString(table)) =>
-              BigQueryTapDefinition(`type` = objType, id = name, dataset = dataset, table = table)
+          value.asJsObject.getFields("type", "id", "dataset", "table", "writeDisposition", "createDisposition") match {
+            case Seq(JsString(objType), JsString(name), JsString(dataset), JsString(table), JsString(writeDisposition), JsString(createDisposition)) =>
+              BigQueryTapDefinition(`type` = objType, id = name, dataset = dataset, table = table, writeDisposition = writeDisposition, createDisposition = createDisposition)
             case _ => deserializationError("BigQuery source expected")
           }
         case Seq(JsString(typ)) if typ == "bigtable" =>
