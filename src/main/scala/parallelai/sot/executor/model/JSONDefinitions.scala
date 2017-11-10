@@ -90,6 +90,8 @@ object SOTMacroConfig {
 
   case class TransformationOp(`type`: String, name: String, op: String, func: String) extends OpType
 
+  case class LookupOp(`type`: String, name: String, schema: String, func: String) extends OpType
+
   case class SourceOp(`type`: String, name: String, schema: String, tap: String) extends OpType
 
   case class SinkOp(`type`: String, name: String, schema: Option[String], tap: String) extends OpType
@@ -273,6 +275,7 @@ object SOTMacroJsonConfig {
   }
 
   implicit val transformationOpFormat = jsonFormat4(TransformationOp)
+  implicit val loopkupOpFormat = jsonFormat4(LookupOp)
   implicit val sinkOpFormat = jsonFormat4(SinkOp)
   implicit val sourceOpFormat = jsonFormat4(SourceOp)
 
@@ -281,6 +284,7 @@ object SOTMacroJsonConfig {
     def write(c: OpType): JsValue = {
       c match {
         case s: TransformationOp => s.toJson
+        case s: LookupOp => s.toJson
         case s: SinkOp => s.toJson
         case s: SourceOp => s.toJson
       }
@@ -309,6 +313,13 @@ object SOTMacroJsonConfig {
             case Seq(JsString(objType), JsString(name), JsString(op), JsString(func)) =>
               TransformationOp(`type` = objType, name = name, op = op, func = func)
             case _ => deserializationError("TransformationOp type expected")
+          }
+        }
+        case Seq(JsString(typ)) if typ == "lookup" => {
+          value.asJsObject.getFields("type", "name", "schema", "func") match {
+            case Seq(JsString(objType), JsString(name), JsString(schema), JsString(func)) =>
+              LookupOp(`type` = objType, name = name, schema = schema, func = func)
+            case _ => deserializationError("LookupOp type expected")
           }
         }
         case _ => deserializationError("SchemaType expected")
