@@ -92,6 +92,8 @@ object SOTMacroConfig {
 
   case class LookupOp(`type`: String, name: String, schema: String, func: String) extends OpType
 
+  case class TFPredictOp(`type`: String, name: String, modelBucket: String, modelPath: String, fetchOps: Seq[String], inFn: String, outFn: String) extends OpType
+
   case class SourceOp(`type`: String, name: String, schema: String, tap: String) extends OpType
 
   case class SinkOp(`type`: String, name: String, schema: Option[String], tap: String) extends OpType
@@ -274,6 +276,7 @@ object SOTMacroJsonConfig {
     }
   }
 
+  implicit val tfPredictOpFormat = jsonFormat7(TFPredictOp)
   implicit val transformationOpFormat = jsonFormat4(TransformationOp)
   implicit val loopkupOpFormat = jsonFormat4(LookupOp)
   implicit val sinkOpFormat = jsonFormat4(SinkOp)
@@ -283,6 +286,7 @@ object SOTMacroJsonConfig {
 
     def write(c: OpType): JsValue = {
       c match {
+        case s: TFPredictOp => s.toJson
         case s: TransformationOp => s.toJson
         case s: LookupOp => s.toJson
         case s: SinkOp => s.toJson
@@ -319,6 +323,16 @@ object SOTMacroJsonConfig {
           value.asJsObject.getFields("type", "name", "schema", "func") match {
             case Seq(JsString(objType), JsString(name), JsString(schema), JsString(func)) =>
               LookupOp(`type` = objType, name = name, schema = schema, func = func)
+            case _ => deserializationError("LookupOp type expected")
+          }
+        }
+        case Seq(JsString(typ)) if typ == "tfpredict" => {
+          value.asJsObject.getFields("type", "name", "modelBucket", "modelPath", "fetchOps", "inFn", "outFn") match {
+            case Seq(JsString(objType), JsString(name), JsString(modelBucket), JsString(modelPath),
+            JsArray(fetchOps), JsString(inFn), JsString(outFn)) =>
+              val fOps = fetchOps.map(_.convertTo[String])
+              TFPredictOp(`type` = objType, name = name, modelBucket = modelBucket, modelPath = modelPath, fetchOps = fOps,
+                inFn = inFn, outFn = outFn)
             case _ => deserializationError("LookupOp type expected")
           }
         }
