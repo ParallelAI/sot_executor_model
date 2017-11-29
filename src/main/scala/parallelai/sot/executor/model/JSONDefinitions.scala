@@ -21,6 +21,8 @@ object SOTMacroConfig {
 
     def id: String
 
+    def name: String
+
     def version: String
 
     def definition: Definition
@@ -47,15 +49,15 @@ object SOTMacroConfig {
 
 
   /** Schema Types **/
-  case class AvroSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
+  case class AvroSchema(`type`: String, id: String, name: String, version: String, definition: Definition) extends Schema
 
-  case class ProtobufSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
+  case class ProtobufSchema(`type`: String, id: String, name: String, version: String, definition: Definition) extends Schema
 
-  case class BigQuerySchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
+  case class BigQuerySchema(`type`: String, id: String, name: String, version: String, definition: Definition) extends Schema
 
-  case class DatastoreSchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
+  case class DatastoreSchema(`type`: String, id: String, name: String, version: String, definition: Definition) extends Schema
 
-  case class ByteArraySchema(`type`: String, id: String, version: String, definition: Definition) extends Schema
+  case class ByteArraySchema(`type`: String, id: String, name: String, version: String, definition: Definition) extends Schema
 
   /** Source Types **/
   case class PubSubTapDefinition(`type`: String, id: String, topic: String) extends TapDefinition
@@ -72,7 +74,7 @@ object SOTMacroConfig {
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
-  case class Config(name: String, version: String, schemas: List[Schema], taps: List[TapDefinition],
+  case class Config(id: String, name: String, version: String, schemas: List[Schema], taps: List[TapDefinition],
                     dag: List[DAGMapping], steps: List[OpType]) {
 
     def parseDAG(): Topology[String, DAGMapping] = {
@@ -85,18 +87,20 @@ object SOTMacroConfig {
   sealed trait OpType {
     def `type`: String
 
+    def id: String
+
     def name: String
   }
 
-  case class TransformationOp(`type`: String, name: String, op: String, func: String) extends OpType
+  case class TransformationOp(`type`: String, id: String, name: String, op: String, params: Seq[Seq[String]], paramsEncoded: Boolean) extends OpType
 
-  case class LookupOp(`type`: String, name: String, schema: String, func: String) extends OpType
+  case class LookupOp(`type`: String, id: String, name: String, schema: String, func: String) extends OpType
 
-  case class TFPredictOp(`type`: String, name: String, modelBucket: String, modelPath: String, fetchOps: Seq[String], inFn: String, outFn: String) extends OpType
+  case class TFPredictOp(`type`: String, id: String, name: String, modelBucket: String, modelPath: String, fetchOps: Seq[String], inFn: String, outFn: String) extends OpType
 
-  case class SourceOp(`type`: String, name: String, schema: String, tap: String) extends OpType
+  case class SourceOp(`type`: String, id: String, name: String, schema: String, tap: String) extends OpType
 
-  case class SinkOp(`type`: String, name: String, schema: Option[String], tap: String) extends OpType
+  case class SinkOp(`type`: String, id: String, name: String, schema: Option[String], tap: String) extends OpType
 
 }
 
@@ -181,14 +185,14 @@ object SOTMacroJsonConfig {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "pubsub" =>
           value.asJsObject.getFields("type", "id", "topic") match {
-            case Seq(JsString(objType), JsString(name), JsString(topic)) =>
-              PubSubTapDefinition(`type` = objType, id = name, topic = topic)
+            case Seq(JsString(objType), JsString(id), JsString(topic)) =>
+              PubSubTapDefinition(`type` = objType, id = id, topic = topic)
             case _ => deserializationError("Pubsub source expected")
           }
         case Seq(JsString(typ)) if typ == "googlestore" =>
           value.asJsObject.getFields("type", "id", "bucket", "blob") match {
-            case Seq(JsString(objType), JsString(name), JsString(bucket), JsString(blob)) =>
-              GoogleStoreTapDefinition(`type` = objType, id = name, bucket = bucket, blob = blob)
+            case Seq(JsString(objType), JsString(id), JsString(bucket), JsString(blob)) =>
+              GoogleStoreTapDefinition(`type` = objType, id = id, bucket = bucket, blob = blob)
             case _ => deserializationError("GoogleStore source expected")
           }
         case Seq(JsString(typ)) if typ == "bigquery" =>
@@ -201,15 +205,47 @@ object SOTMacroJsonConfig {
           }
         case Seq(JsString(typ)) if typ == "bigtable" =>
           value.asJsObject.getFields("type", "id", "instanceId", "tableId", "familyName", "numNodes") match {
-            case Seq(JsString(objType), JsString(name), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
+            case Seq(JsString(objType), JsString(id), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
               val fn = familyName.convertTo[List[String]]
-              BigTableTapDefinition(`type` = objType, id = name, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
+              BigTableTapDefinition(`type` = objType, id = id, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
             case _ => deserializationError("BigTable source expected")
           }
         case Seq(JsString(typ)) if typ == "datastore" =>
           value.asJsObject.getFields("type", "id", "kind") match {
-            case Seq(JsString(objType), JsString(name), JsString(kind)) =>
-              DatastoreTapDefinition(`type` = objType, id = name, kind = kind)
+            case Seq(JsString(objType), JsString(id), JsString(kind)) =>
+              DatastoreTapDefinition(`type` = objType, id = id, kind = kind)
+            case _ => deserializationError("Datastore source expected")
+          }  case Seq(JsString(typ)) if typ == "pubsub" =>
+          value.asJsObject.getFields("type", "id", "topic") match {
+            case Seq(JsString(objType), JsString(id), JsString(topic)) =>
+              PubSubTapDefinition(`type` = objType, id = id, topic = topic)
+            case _ => deserializationError("Pubsub source expected")
+          }
+        case Seq(JsString(typ)) if typ == "googlestore" =>
+          value.asJsObject.getFields("type", "id", "bucket", "blob") match {
+            case Seq(JsString(objType), JsString(id), JsString(bucket), JsString(blob)) =>
+              GoogleStoreTapDefinition(`type` = objType, id = id, bucket = bucket, blob = blob)
+            case _ => deserializationError("GoogleStore source expected")
+          }
+        case Seq(JsString(typ)) if typ == "bigquery" =>
+          value.asJsObject.getFields("type", "id", "dataset", "table") match {
+            case Seq(objType, name, dataset, table) =>
+              BigQueryTapDefinition(`type` = objType.convertTo[String], id = name.convertTo[String],
+                dataset = dataset.convertTo[String], table = table.convertTo[String], writeDisposition = value.asJsObject.fields.get("writeDisposition").map(_.convertTo[String]),
+                createDisposition = value.asJsObject.fields.get("createDisposition").map(_.convertTo[String]))
+            case _ => deserializationError("BigQuery source expected")
+          }
+        case Seq(JsString(typ)) if typ == "bigtable" =>
+          value.asJsObject.getFields("type", "id", "instanceId", "tableId", "familyName", "numNodes") match {
+            case Seq(JsString(objType), JsString(id), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
+              val fn = familyName.convertTo[List[String]]
+              BigTableTapDefinition(`type` = objType, id = id, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
+            case _ => deserializationError("BigTable source expected")
+          }
+        case Seq(JsString(typ)) if typ == "datastore" =>
+          value.asJsObject.getFields("type", "id", "kind") match {
+            case Seq(JsString(objType), JsString(id), JsString(kind)) =>
+              DatastoreTapDefinition(`type` = objType, id = id, kind = kind)
             case _ => deserializationError("Datastore source expected")
           }
         case _ => deserializationError("Source expected")
@@ -217,11 +253,11 @@ object SOTMacroJsonConfig {
     }
   }
 
-  implicit val avroSchemaFormat = jsonFormat4(AvroSchema)
-  implicit val protobufSchemaFormat = jsonFormat4(ProtobufSchema)
-  implicit val bigQuerySchemaFormat = jsonFormat4(BigQuerySchema)
-  implicit val datastoreSchemaFormat = jsonFormat4(DatastoreSchema)
-  implicit val byteArraySchemaFormat = jsonFormat4(ByteArraySchema)
+  implicit val avroSchemaFormat = jsonFormat5(AvroSchema)
+  implicit val protobufSchemaFormat = jsonFormat5(ProtobufSchema)
+  implicit val bigQuerySchemaFormat = jsonFormat5(BigQuerySchema)
+  implicit val datastoreSchemaFormat = jsonFormat5(DatastoreSchema)
+  implicit val byteArraySchemaFormat = jsonFormat5(ByteArraySchema)
 
   implicit object SchemaJsonFormat extends RootJsonFormat[Schema] {
 
@@ -237,37 +273,37 @@ object SOTMacroJsonConfig {
     def read(value: JsValue): Schema = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "avro" => {
-          value.asJsObject.getFields("type", "id", "version", "definition") match {
-            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
-              AvroSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
+          value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
+              AvroSchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Avro schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "protobuf" => {
-          value.asJsObject.getFields("type", "id", "version", "definition") match {
-            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
-              ProtobufSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
+          value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
+              ProtobufSchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Protobuf schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "bigquery" => {
-          value.asJsObject.getFields("type", "id", "version", "definition") match {
-            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
-              BigQuerySchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
+          value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
+              BigQuerySchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("BigQuery schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "datastore" => {
-          value.asJsObject.getFields("type", "id", "version", "definition") match {
-            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
-              DatastoreSchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
+          value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
+              DatastoreSchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Datastore schema expected")
           }
         }
         case Seq(JsString(typ)) if typ == "bytearray" => {
-          value.asJsObject.getFields("type", "id", "version", "definition") match {
-            case Seq(JsString(objType), JsString(name), JsString(version), definition) =>
-              ByteArraySchema(`type` = objType, id = name, version = version, definition = definition.convertTo[Definition])
+          value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
+              ByteArraySchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("ByteArray schema expected")
           }
         }
@@ -276,11 +312,11 @@ object SOTMacroJsonConfig {
     }
   }
 
-  implicit val tfPredictOpFormat = jsonFormat7(TFPredictOp)
-  implicit val transformationOpFormat = jsonFormat4(TransformationOp)
-  implicit val loopkupOpFormat = jsonFormat4(LookupOp)
-  implicit val sinkOpFormat = jsonFormat4(SinkOp)
-  implicit val sourceOpFormat = jsonFormat4(SourceOp)
+  implicit val tfPredictOpFormat = jsonFormat8(TFPredictOp)
+  implicit val transformationOpFormat = jsonFormat6(TransformationOp)
+  implicit val loopkupOpFormat = jsonFormat5(LookupOp)
+  implicit val sinkOpFormat = jsonFormat5(SinkOp)
+  implicit val sourceOpFormat = jsonFormat5(SourceOp)
 
   implicit object OpJsonFormat extends RootJsonFormat[OpType] {
 
@@ -297,41 +333,42 @@ object SOTMacroJsonConfig {
     def read(value: JsValue): OpType = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "source" => {
-          value.asJsObject.getFields("type", "name", "schema", "source") match {
-            case Seq(JsString(objType), JsString(name), JsString(schema), JsString(source)) =>
-              SourceOp(`type` = objType, name = name, schema = schema, tap = source)
+          value.asJsObject.getFields("type", "id", "name", "schema", "source") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(source)) =>
+              SourceOp(`type` = objType, id = id, name = name, schema = schema, tap = source)
             case _ => deserializationError("SourceOp type expected")
           }
         }
         case Seq(JsString(typ)) if typ == "sink" => {
-          value.asJsObject.getFields("type", "name", "source", "schema") match {
-            case Seq(JsString(objType), JsString(name), JsString(source), JsString(schema)) =>
-              SinkOp(`type` = objType, name = name, schema = Some(schema), tap = source)
-            case Seq(JsString(objType), JsString(name), JsString(source)) =>
-              SinkOp(`type` = objType, name = name, schema = None, tap = source)
+          value.asJsObject.getFields("type", "id", "name", "source", "schema") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(source), JsString(schema)) =>
+              SinkOp(`type` = objType, id = id, name = name, schema = Some(schema), tap = source)
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(source)) =>
+              SinkOp(`type` = objType, id = id, name = name, schema = None, tap = source)
             case _ => deserializationError("SinkOp type expected")
           }
         }
         case Seq(JsString(typ)) if typ == "transformation" => {
-          value.asJsObject.getFields("type", "name", "op", "func") match {
-            case Seq(JsString(objType), JsString(name), JsString(op), JsString(func)) =>
-              TransformationOp(`type` = objType, name = name, op = op, func = func)
+          value.asJsObject.getFields("type", "id", "name", "op", "params", "paramsEncoded") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(op), JsArray(params), JsBoolean(paramsEncoded)) =>
+              TransformationOp(`type` = objType, id = id, name = name, op = op, params = params.map(_.convertTo[Seq[String]])
+                , paramsEncoded = paramsEncoded)
             case _ => deserializationError("TransformationOp type expected")
           }
         }
         case Seq(JsString(typ)) if typ == "lookup" => {
-          value.asJsObject.getFields("type", "name", "schema", "func") match {
-            case Seq(JsString(objType), JsString(name), JsString(schema), JsString(func)) =>
-              LookupOp(`type` = objType, name = name, schema = schema, func = func)
+          value.asJsObject.getFields("type", "id", "name", "schema", "func") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(func)) =>
+              LookupOp(`type` = objType, id = id, name = name, schema = schema, func = func)
             case _ => deserializationError("LookupOp type expected")
           }
         }
         case Seq(JsString(typ)) if typ == "tfpredict" => {
-          value.asJsObject.getFields("type", "name", "modelBucket", "modelPath", "fetchOps", "inFn", "outFn") match {
-            case Seq(JsString(objType), JsString(name), JsString(modelBucket), JsString(modelPath),
+          value.asJsObject.getFields("type", "id", "name", "modelBucket", "modelPath", "fetchOps", "inFn", "outFn") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(modelBucket), JsString(modelPath),
             JsArray(fetchOps), JsString(inFn), JsString(outFn)) =>
               val fOps = fetchOps.map(_.convertTo[String])
-              TFPredictOp(`type` = objType, name = name, modelBucket = modelBucket, modelPath = modelPath, fetchOps = fOps,
+              TFPredictOp(`type` = objType, id = id, name = name, modelBucket = modelBucket, modelPath = modelPath, fetchOps = fOps,
                 inFn = inFn, outFn = outFn)
             case _ => deserializationError("LookupOp type expected")
           }
@@ -342,7 +379,7 @@ object SOTMacroJsonConfig {
   }
 
   implicit val dagFormat = jsonFormat2(DAGMapping)
-  implicit val configFormat = jsonFormat6(Config)
+  implicit val configFormat = jsonFormat7(Config)
 
   def apply(fileName: String): Config = {
     val stream: InputStream = getClass.getResourceAsStream("/" + fileName)

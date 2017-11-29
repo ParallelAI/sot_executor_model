@@ -1,10 +1,12 @@
 {
+  "id": "schemaid",
   "name": "schemaname",
   "version": "version1",
   "schemas": [
     {
       "type": "protobuf",
       "id": "protoschema1",
+      "name": "protoschema1",
       "version": "version2",
       "definition": {
         "type": "protobufdefinition",
@@ -15,6 +17,7 @@
     {
       "type": "bigquery",
       "id": "bigqueryschema1",
+      "name": "bigqueryschema1",
       "version": "version3",
       "definition": {
         "type": "bigquerydefinition",
@@ -55,36 +58,46 @@
   "steps": [
     {
       "type": "source",
+      "id": "in",
       "name": "in",
       "schema": "protoschema1",
       "source": "pubsubsource1"
     },
     {
       "type": "transformation",
+      "id": "mapper1",
       "name": "mapper1",
       "op": "map",
-      "func": "m => (m.teamName, m.score.toInt)"
+      "params": [["m => (m.teamName, m.score.toInt)"]],
+      "paramsEncoded": false
     },
     {
       "type": "transformation",
+      "id": "filter",
       "name": "filter",
       "op": "filter",
-      "func": "m => m.score > 2"
+      "params": [["m => m.score > 2"]],
+      "paramsEncoded": false
     },
     {
       "type": "transformation",
+      "id": "mapper2",
       "name": "mapper2",
       "op": "map",
-      "func": "m => BigQueryRow(m._1, m._2, Helper.fmt.print(Instant.now()))"
+      "params": [["m => BigQueryRow(m._1, m._2, Helper.fmt.print(Instant.now()))"]],
+      "paramsEncoded": false
     },
     {
       "type": "transformation",
+      "id": "sumByKey",
       "name": "sumByKey",
       "op": "sumByKey",
-      "func": ""
+      "params": [[""]],
+      "paramsEncoded": false
     },
     {
       "type": "sink",
+      "id": "out",
       "name": "out",
       "schema": "bigqueryschema1",
       "source": "bigquerysource1"

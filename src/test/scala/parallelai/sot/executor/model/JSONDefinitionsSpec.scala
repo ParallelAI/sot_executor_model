@@ -78,8 +78,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[BigQueryDefinition]
 
-      val schemas = List(AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema),
-        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", definition = schemaOut))
+      val schemas = List(AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema),
+        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut))
 
       val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
         BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = Some("CREATE_NEVER")))
@@ -92,15 +92,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
         DAGMapping(from = "mapper2", to = "out")
       )
       val steps = List(
-        SourceOp(`type` = "source", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
-        TransformationOp(`type` = "transformation", name = "mapper1", op = "map", func = "m => (m.teamName, m.score.toInt)"),
-        TransformationOp(`type` = "transformation", name = "filter", op = "filter", func = "m => m.score > 2"),
-        TransformationOp(`type` = "transformation", name = "mapper2", op = "map", func = "m => BigQueryRow(m._1, m._2, Helper.fmt.print(Instant.now()))"),
-        TransformationOp(`type` = "transformation", name = "sumByKey", op = "sumByKey", func = ""),
-        SinkOp(`type` = "sink", name = "out", schema = Some("bigqueryschema1"), tap = "bigquerysource1")
+        SourceOp(`type` = "source", id = "in", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
+        TransformationOp(`type` = "transformation", id = "mapper1", name = "mapper1", op = "map", params = List(List("m => (m.teamName, m.score.toInt)")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "filter", name = "filter", op = "filter", params = List(List("m => m.score > 2")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "mapper2", name = "mapper2", op = "map", params = List(List("m => BigQueryRow(m._1, m._2, Helper.fmt.print(Instant.now()))")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "sumByKey", name = "sumByKey", op = "sumByKey", params = List(List("")), paramsEncoded = false),
+        SinkOp(`type` = "sink", id = "out", name = "out", schema = Some("bigqueryschema1"), tap = "bigquerysource1")
       )
 
-      val expectedConfig = Config(name = "schemaname", version = "version1", schemas = schemas,
+      val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", schemas = schemas,
         taps = sources, dag = dag, steps = steps)
       expectedConfig should be(config)
 
@@ -142,8 +142,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[BigQueryDefinition]
 
-      val schemas = List(ProtobufSchema(`type` = "protobuf", id = "protoschema1", version = "version2", definition = schema),
-        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", definition = schemaOut))
+      val schemas = List(ProtobufSchema(`type` = "protobuf", id = "protoschema1", name = "protoschema1", version = "version2", definition = schema),
+        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut))
 
       val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
         BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = None))
@@ -156,15 +156,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
         DAGMapping(from = "mapper2", to = "out")
       )
       val steps = List(
-        SourceOp(`type` = "source", name = "in", schema = "protoschema1", tap = "pubsubsource1"),
-        TransformationOp(`type` = "transformation", name = "mapper1", op = "map", func = "m => (m.teamName, m.score.toInt)"),
-        TransformationOp(`type` = "transformation", name = "filter", op = "filter", func = "m => m.score > 2"),
-        TransformationOp(`type` = "transformation", name = "mapper2", op = "map", func = "m => BigQueryRow(m._1, m._2, Helper.fmt.print(Instant.now()))"),
-        TransformationOp(`type` = "transformation", name = "sumByKey", op = "sumByKey", func = ""),
-        SinkOp(`type` = "sink", name = "out", schema = Some("bigqueryschema1"), tap = "bigquerysource1")
+        SourceOp(`type` = "source", id = "in", name = "in", schema = "protoschema1", tap = "pubsubsource1"),
+        TransformationOp(`type` = "transformation", id = "mapper1", name = "mapper1", op = "map", params = List(List("m => (m.teamName, m.score.toInt)")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "filter", name = "filter", op = "filter", params = List(List("m => m.score > 2")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "mapper2", name = "mapper2", op = "map", params = List(List("m => BigQueryRow(m._1, m._2, Helper.fmt.print(Instant.now()))")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "sumByKey", name = "sumByKey", op = "sumByKey", params = List(List("")), paramsEncoded = false),
+        SinkOp(`type` = "sink", id = "out", name = "out", schema = Some("bigqueryschema1"), tap = "bigquerysource1")
       )
 
-      val expectedConfig = Config(name = "schemaname", version = "version1", schemas = schemas,
+      val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", schemas = schemas,
         taps = sources, dag = dag, steps = steps)
       expectedConfig should be(config)
 
@@ -210,7 +210,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |}
         """.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema1)
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema1)
 
       val schemas = List(inSchema)
 
@@ -227,15 +227,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val steps = List(
-        SourceOp(`type` = "source", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
-        TransformationOp(`type` = "transformation", name = "mapper1", op = "map", func = "m => (m.teamName, m.score.toInt)"),
-        TransformationOp(`type` = "transformation", name = "filter", op = "filter", func = "m => m.score > 2"),
-        TransformationOp(`type` = "transformation", name = "mapper2", op = "map", func = "m => BigTableRecord(m._1, (\"cf\", \"counter\", m._2), (\"cf\", \"counter2\", m._2 * 1.225))"),
-        TransformationOp(`type` = "transformation", name = "sumByKey", op = "sumByKey", func = ""),
-        SinkOp(`type` = "sink", name = "out", schema = None, tap = "bigtablesource1")
+        SourceOp(`type` = "source", id = "in", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
+        TransformationOp(`type` = "transformation", id = "mapper1", name = "mapper1", op = "map", params = List(List("m => (m.teamName, m.score.toInt)")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "filter", name = "filter", op = "filter", params = List(List("m => m.score > 2")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "mapper2", name = "mapper2", op = "map", params = List(List("m => BigTableRecord(m._1, (\"cf\", \"counter\", m._2), (\"cf\", \"counter2\", m._2 * 1.225))")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "sumByKey", name = "sumByKey", op = "sumByKey", params = List(List("")), paramsEncoded = false),
+        SinkOp(`type` = "sink", id = "out", name = "out", schema = None, tap = "bigtablesource1")
       )
 
-      val expectedConfig = Config(name = "schemaname", version = "version1",
+      val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
         taps = sources, schemas = schemas, dag = dag, steps = steps)
       expectedConfig should be(config)
 
@@ -323,8 +323,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema1)
-      val outSchema = AvroSchema(`type` = "avro", id = "avroschema2", version = "version2", definition = schema2)
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema1)
+      val outSchema = AvroSchema(`type` = "avro", id = "avroschema2", name = "avroschema2", version = "version2", definition = schema2)
 
       val schemas = List(inSchema, outSchema)
 
@@ -339,12 +339,12 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val steps = List(
-        SourceOp(`type` = "source", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
-        TransformationOp(`type` = "transformation", name = "mapper1", op = "map", func = "m => MessageExtended(m.user, m.teamName, m.score, m.eventTime, m.eventTimeStr, 1)"),
-        SinkOp(`type` = "sink", name = "out", schema = Some("avroschema2"), tap = "pubsubsource2")
+        SourceOp(`type` = "source", id = "in", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
+        TransformationOp(`type` = "transformation", id = "mapper1", name = "mapper1", op = "map", params = List(List("m => MessageExtended(m.user, m.teamName, m.score, m.eventTime, m.eventTimeStr, 1)")), paramsEncoded = false),
+        SinkOp(`type` = "sink", id = "out", name = "out", schema = Some("avroschema2"), tap = "pubsubsource2")
       )
 
-      val expectedConfig = Config(name = "schemaname", version = "version1", taps = sources,
+      val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", taps = sources,
         schemas = schemas, dag = dag, steps = steps)
       expectedConfig should be(config)
 
@@ -390,7 +390,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[AvroDefinition]
 
-      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = schema1)
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema1)
 
       val schemas = List(inSchema)
 
@@ -408,15 +408,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val steps = List(
-        SourceOp(`type` = "source", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
-        TransformationOp(`type` = "transformation", name = "mapper1", op = "map", func = "m => (m.teamName, m.score.toInt)"),
-        TransformationOp(`type` = "transformation", name = "filter", op = "filter", func = "m => m.score > 2"),
-        TransformationOp(`type` = "transformation", name = "mapper2", op = "map", func = "m => 'teamscores ->> m._1 :: 'score1 ->> m._2.toString :: 'score2 ->> (m._2 * 0.123) :: HNil"),
-        TransformationOp(`type` = "transformation", name = "sumByKey", op = "sumByKey", func = ""),
-        SinkOp(`type` = "sink", name = "out", schema = None, tap = "datastoresource1")
+        SourceOp(`type` = "source", id = "in", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
+        TransformationOp(`type` = "transformation", id = "mapper1", name = "mapper1", op = "map", params = List(List("m => (m.teamName, m.score.toInt)")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "filter", name = "filter", op = "filter", params = List(List("m => m.score > 2")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "mapper2", name = "mapper2", op = "map", params = List(List("m => 'teamscores ->> m._1 :: 'score1 ->> m._2.toString :: 'score2 ->> (m._2 * 0.123) :: HNil")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "sumByKey", name = "sumByKey", op = "sumByKey", params = List(List("")), paramsEncoded = false),
+        SinkOp(`type` = "sink", id = "out", name = "out", schema = None, tap = "datastoresource1")
       )
 
-      val expectedConfig = Config(name = "schemaname", version = "version1",
+      val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
         taps = sources, schemas = schemas, dag = dag, steps = steps)
       expectedConfig should be(config)
 
@@ -484,8 +484,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[DatastoreDefinition]
 
-      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", version = "version2", definition = def1)
-      val outSchema = DatastoreSchema(`type` = "datastore", id = "datastore1", version = "version3", definition = def2)
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = def1)
+      val outSchema = DatastoreSchema(`type` = "datastore", id = "datastore1", name = "datastore1", version = "version3", definition = def2)
 
       val schemas = List(inSchema, outSchema)
 
@@ -503,15 +503,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val steps = List(
-        SourceOp(`type` = "source", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
-        TransformationOp(`type` = "transformation", name = "mapper1", op = "map", func = "m => (m.teamName, m.score.toInt)"),
-        TransformationOp(`type` = "transformation", name = "filter", op = "filter", func = "m => m.score > 2"),
-        TransformationOp(`type` = "transformation", name = "mapper2", op = "map", func = "m => OutSchema(m._1, m._2.toString, m._2 * 0.123)"),
-        TransformationOp(`type` = "transformation", name = "sumByKey", op = "sumByKey", func = ""),
-        SinkOp(`type` = "sink", name = "out", schema = Some("datastore1"), tap = "datastoresource1")
+        SourceOp(`type` = "source", id = "in", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
+        TransformationOp(`type` = "transformation", id = "mapper1", name = "mapper1", op = "map", params = List(List("m => (m.teamName, m.score.toInt)")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "filter", name = "filter", op = "filter", params = List(List("m => m.score > 2")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "mapper2", name = "mapper2", op = "map", params = List(List("m => OutSchema(m._1, m._2.toString, m._2 * 0.123)")), paramsEncoded = false),
+        TransformationOp(`type` = "transformation", id = "sumByKey", name = "sumByKey", op = "sumByKey", params = List(List("")), paramsEncoded = false),
+        SinkOp(`type` = "sink", id = "out", name = "out", schema = Some("datastore1"), tap = "datastoresource1")
       )
 
-      val expectedConfig = Config(name = "schemaname", version = "version1",
+      val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
         taps = sources, schemas = schemas, dag = dag, steps = steps)
       expectedConfig should be(config)
 
