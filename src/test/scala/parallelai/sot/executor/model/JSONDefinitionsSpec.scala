@@ -517,6 +517,80 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
     }
 
+    "parse nested json schema" in {
+
+      val jsonSchema =
+        """
+          |{
+          |  "type": "json",
+          |  "id": "jsonschema1",
+          |  "name": "jsonschema1name",
+          |  "version": "version1",
+          |  "definition": {
+          |    "type": "jsondefinition",
+          |    "name": "Customer",
+          |    "fields": [
+          |      {
+          |        "mode": "required",
+          |        "name": "userName",
+          |        "type": "record",
+          |        "fields": [
+          |          {
+          |            "mode": "repeated",
+          |            "name": "userid2",
+          |            "type": "Int"
+          |          },
+          |          {
+          |            "mode": "repeated",
+          |            "name": "userid3",
+          |            "type": "record",
+          |            "fields": [
+          |              {
+          |                "mode": "nullable",
+          |                "name": "score",
+          |                "type": "Float"
+          |              }
+          |            ]
+          |          }
+          |        ]
+          |      },
+          |      {
+          |        "mode": "nullable",
+          |        "name": "userId",
+          |        "type": "Long"
+          |      },
+          |      {
+          |        "mode": "nullable",
+          |        "name": "score",
+          |        "type": "Float"
+          |      },
+          |      {
+          |        "mode": "nullable",
+          |        "name": "eventTime",
+          |        "type": "Long"
+          |      }
+          |    ]
+          |  }
+          |}
+        """.stripMargin.stripMargin.parseJson.convertTo[JSONSchema]
+
+      val expectedDefinition = JSONDefinition(`type` = "jsondefinition", name = "Customer", fields = List(
+        JSONDefinitionField(`type` = "record", mode = "required", name = "userName", fields = Some(List(
+          JSONDefinitionField(mode = "repeated", name = "userid2", `type` = "Int", fields = None),
+          JSONDefinitionField(mode = "repeated", name = "userid3", `type` = "record", fields = Some(List(
+            JSONDefinitionField(mode = "nullable", name = "score", `type` = "Float", fields = None)
+          )))
+        ))),
+        JSONDefinitionField(`type` = "Long", mode = "nullable", name = "userId", fields = None),
+        JSONDefinitionField(`type` = "Float", mode = "nullable", name = "score", fields = None),
+        JSONDefinitionField(`type` = "Long", mode = "nullable", name = "eventTime", fields = None)
+      ))
+      val expectedJSONSchema = JSONSchema(`type` = "json", id = "jsonschema1", name = "jsonschema1name", version = "version1", definition = expectedDefinition)
+
+      jsonSchema should be (expectedJSONSchema)
+
+    }
+
   }
 
 }
