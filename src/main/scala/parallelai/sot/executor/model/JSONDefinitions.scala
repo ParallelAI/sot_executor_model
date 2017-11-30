@@ -159,8 +159,8 @@ object SOTMacroJsonConfig {
         case Seq(JsString(typ)) if typ == "jsondefinition" =>
           value.asJsObject.getFields("type", "name", "fields") match {
             case Seq(JsString(typ), JsString(name), JsArray(fields)) =>
-              val fl = fields.map(_.convertTo[DatastoreDefinitionField]).toList
-              DatastoreDefinition(`type` = typ, name = name, fields = fl)
+              val fl = fields.map(_.convertTo[JSONDefinitionField]).toList
+              JSONDefinition(`type` = typ, name = name, fields = fl)
             case _ => deserializationError("JSONDefinition is expected")
           }
         case Seq(JsString(typ)) if typ == "protobufdefinition" =>
