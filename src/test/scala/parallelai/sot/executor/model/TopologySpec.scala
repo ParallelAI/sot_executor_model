@@ -119,6 +119,18 @@ class TopologySpec extends WordSpec with Matchers with BeforeAndAfterAll{
 
     }
 
+    "sort topoligically" in {
+      val sorted = Topology.topologicalSort(Seq(("in1", "op1"), ("in", "op1"), ("op1", "out1"), ("op1", "out2")))
+      sorted._1 should ===(Seq("in", "in1", "op1", "out1", "out2"))
+      sorted._2 should ===(Seq(("in", "op1"), ("in1", "op1"), ("op1", "out1"), ("op1", "out2")))
+    }
+
+    "sort topoligically containing a cycle" in {
+      assertThrows[RuntimeException] {
+        Topology.topologicalSort(Seq(("in1", "op1"), ("in", "op1"), ("op1", "out1"), ("op1", "out2"), ("out2", "in1")))
+      }
+    }
+
   }
 
 }

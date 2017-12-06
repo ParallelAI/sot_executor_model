@@ -1,9 +1,12 @@
 package parallelai.sot.executor.model
 
-import scala.collection.immutable.{IndexedSeq => Vec}
+import parallelai.sot.executor.model.SOTMacroConfig.DAGMapping
+
+import scala.collection.immutable.{SortedMap, SortedSet, IndexedSeq => Vec}
 import scala.collection.mutable.{Set => MSet, Stack => MStack}
-import scala.util.{Success, Failure, Try}
+import scala.util.{Failure, Success, Try}
 import Vector.{empty => emptySeq}
+import scala.annotation.tailrec
 
 object Topology {
   /** Creates an empty topology with no vertices or edges.
@@ -66,6 +69,24 @@ object Topology {
     buildEdges(e, topV)
   }
 
+  def topologicalSort[A : Ordering](edges: Seq[(A, A)]): (Seq[A], Seq[(A, A)]) = {
+    @tailrec
+    def tsort(toPreds: Map[A, SortedSet[A]], done: Seq[A], doneEdges: Seq[(A, A)]): (Seq[A],Seq[(A, A)]) = {
+      val (noPreds, hasPreds) = toPreds.partition { _._2.isEmpty }
+      if (noPreds.isEmpty) {
+        if (hasPreds.isEmpty) (done, doneEdges) else sys.error(hasPreds.toString)
+      } else {
+        val found = noPreds.map { _._1 } .to[SortedSet]
+        val aToA = hasPreds.map { case (k, v) => v.intersect(found).map((_, k)) }
+        val updatedDoneEdges = doneEdges ++ aToA.flatten
+        tsort(hasPreds.mapValues { _ -- found }, done ++ found, updatedDoneEdges)
+      }
+    }
+
+    val toPred = edges.foldLeft(SortedMap[A, SortedSet[A]]()) { (acc, e) =>
+      acc + (e._1 -> acc.getOrElse(e._1, SortedSet[A]())) + (e._2 -> (acc.getOrElse(e._2, SortedSet[A]()) + e._1))    }
+    tsort(toPred, Seq(), Seq())
+  }
 
 }
 
@@ -302,6 +323,10 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
       if (ex.size > n) Some(v)
       else None
     }.toSet
+  }
+
+  def topologicalSortDag(dag: Topology[String, DAGMapping]): (Seq[String], Seq[(String, String)]) = {
+    Topology.topologicalSort(dag.edges.map(e => (e.from, e.to)).toSeq.sorted)
   }
 
 }
