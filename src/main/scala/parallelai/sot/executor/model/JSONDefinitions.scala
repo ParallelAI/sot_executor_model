@@ -100,8 +100,6 @@ object SOTMacroConfig {
 
   case class TransformationOp(`type`: String, id: String, name: String, op: String, params: Seq[Seq[String]], paramsEncoded: Boolean) extends OpType
 
-  case class LookupOp(`type`: String, id: String, name: String, schema: String, func: String) extends OpType
-
   case class TFPredictOp(`type`: String, id: String, name: String, modelBucket: String, modelPath: String, fetchOps: Seq[String], inFn: String, outFn: String) extends OpType
 
   case class SourceOp(`type`: String, id: String, name: String, schema: String, tap: String) extends OpType
@@ -340,7 +338,6 @@ object SOTMacroJsonConfig {
 
   implicit val tfPredictOpFormat = jsonFormat8(TFPredictOp)
   implicit val transformationOpFormat = jsonFormat6(TransformationOp)
-  implicit val loopkupOpFormat = jsonFormat5(LookupOp)
   implicit val sinkOpFormat = jsonFormat5(SinkOp)
   implicit val sourceOpFormat = jsonFormat5(SourceOp)
 
@@ -350,7 +347,6 @@ object SOTMacroJsonConfig {
       c match {
         case s: TFPredictOp => s.toJson
         case s: TransformationOp => s.toJson
-        case s: LookupOp => s.toJson
         case s: SinkOp => s.toJson
         case s: SourceOp => s.toJson
       }
@@ -382,13 +378,6 @@ object SOTMacroJsonConfig {
             case _ => deserializationError("TransformationOp type expected")
           }
         }
-        case Seq(JsString(typ)) if typ == "lookup" => {
-          value.asJsObject.getFields("type", "id", "name", "schema", "func") match {
-            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(func)) =>
-              LookupOp(`type` = objType, id = id, name = name, schema = schema, func = func)
-            case _ => deserializationError("LookupOp type expected")
-          }
-        }
         case Seq(JsString(typ)) if typ == "tfpredict" => {
           value.asJsObject.getFields("type", "id", "name", "modelBucket", "modelPath", "fetchOps", "inFn", "outFn") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(modelBucket), JsString(modelPath),
@@ -396,7 +385,7 @@ object SOTMacroJsonConfig {
               val fOps = fetchOps.map(_.convertTo[String])
               TFPredictOp(`type` = objType, id = id, name = name, modelBucket = modelBucket, modelPath = modelPath, fetchOps = fOps,
                 inFn = inFn, outFn = outFn)
-            case _ => deserializationError("LookupOp type expected")
+            case _ => deserializationError("tfpredict type expected")
           }
         }
         case _ => deserializationError("SchemaType expected")
