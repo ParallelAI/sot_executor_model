@@ -7,6 +7,7 @@ import scala.collection.mutable.{Set => MSet, Stack => MStack}
 import scala.util.{Failure, Success, Try}
 import Vector.{empty => emptySeq}
 import scala.annotation.tailrec
+import scala.math.Ordering
 
 object Topology {
   /** Creates an empty topology with no vertices or edges.
@@ -325,8 +326,8 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
     }.toSet
   }
 
-  def topologicalSortDag(dag: Topology[String, DAGMapping]): (Seq[String], Seq[(String, String)]) = {
-    Topology.topologicalSort(dag.edges.map(e => (e.from, e.to)).toSeq.sorted)
+  def topologicalSort()(implicit ord: Ordering[V]): (Seq[V], Seq[(V, V)]) = {
+    Topology.topologicalSort(edges.map(e => (e.from, e.to)).toSeq.sorted)
   }
 
 }
