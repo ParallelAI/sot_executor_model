@@ -396,7 +396,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val sources = List(
         PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
-        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1")
+        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupCommits = false)
       )
 
       val dag = List(
@@ -491,7 +491,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val sources = List(
         PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
-        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1")
+        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupCommits = false)
       )
 
       val dag = List(

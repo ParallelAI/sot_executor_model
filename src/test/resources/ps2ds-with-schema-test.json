@@ -76,7 +76,8 @@
     {
       "type": "datastore",
       "id": "datastoresource1",
-      "kind": "kind1"
+      "kind": "kind1",
+      "dedupCommits": false
     }
   ],
   "steps": [

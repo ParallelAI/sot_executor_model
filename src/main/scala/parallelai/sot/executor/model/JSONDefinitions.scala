@@ -76,7 +76,7 @@ object SOTMacroConfig {
 
   case class BigTableTapDefinition(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends TapDefinition
 
-  case class DatastoreTapDefinition(`type`: String, id: String, kind: String) extends TapDefinition
+  case class DatastoreTapDefinition(`type`: String, id: String, kind: String, dedupCommits: Boolean) extends TapDefinition
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
@@ -182,7 +182,7 @@ object SOTMacroJsonConfig {
   implicit val googleStoreTapDefinition = jsonFormat4(GoogleStoreTapDefinition)
   implicit val bigQueryTapDefinition = jsonFormat6(BigQueryTapDefinition)
   implicit val bigTableTapDefinition = jsonFormat6(BigTableTapDefinition)
-  implicit val datastoreTapDefinition = jsonFormat3(DatastoreTapDefinition)
+  implicit val datastoreTapDefinition = jsonFormat4(DatastoreTapDefinition)
 
   implicit object SourceJsonFormat extends RootJsonFormat[TapDefinition] {
 
@@ -225,9 +225,9 @@ object SOTMacroJsonConfig {
             case _ => deserializationError("BigTable source expected")
           }
         case Seq(JsString(typ)) if typ == "datastore" =>
-          value.asJsObject.getFields("type", "id", "kind") match {
-            case Seq(JsString(objType), JsString(id), JsString(kind)) =>
-              DatastoreTapDefinition(`type` = objType, id = id, kind = kind)
+          value.asJsObject.getFields("type", "id", "kind", "dedupCommits") match {
+            case Seq(JsString(objType), JsString(id), JsString(kind), JsBoolean(dedupCommits)) =>
+              DatastoreTapDefinition(`type` = objType, id = id, kind = kind, dedupCommits = dedupCommits)
             case _ => deserializationError("Datastore source expected")
           }
         case Seq(JsString(typ)) if typ == "pubsub" =>
@@ -256,12 +256,6 @@ object SOTMacroJsonConfig {
               val fn = familyName.convertTo[List[String]]
               BigTableTapDefinition(`type` = objType, id = id, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
             case _ => deserializationError("BigTable source expected")
-          }
-        case Seq(JsString(typ)) if typ == "datastore" =>
-          value.asJsObject.getFields("type", "id", "kind") match {
-            case Seq(JsString(objType), JsString(id), JsString(kind)) =>
-              DatastoreTapDefinition(`type` = objType, id = id, kind = kind)
-            case _ => deserializationError("Datastore source expected")
           }
         case _ => deserializationError("Source expected")
       }
