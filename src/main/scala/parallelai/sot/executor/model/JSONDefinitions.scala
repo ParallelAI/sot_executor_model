@@ -66,7 +66,7 @@ object SOTMacroConfig {
   case class ByteArraySchema(`type`: String, id: String, name: String, version: String, definition: Definition) extends Schema
 
   /** Source Types **/
-  case class PubSubTapDefinition(`type`: String, id: String, topic: String) extends TapDefinition
+  case class PubSubTapDefinition(`type`: String, id: String, topic: String, managedSubscription: Option[Boolean], timestampAttribute: Option[String], idAttribute: Option[String]) extends TapDefinition
 
   case class GoogleStoreTapDefinition(`type`: String, id: String, bucket: String, blob: String) extends TapDefinition
 
@@ -178,7 +178,7 @@ object SOTMacroJsonConfig {
     }
   }
 
-  implicit val pubSubTapDefinition = jsonFormat3(PubSubTapDefinition)
+  implicit val pubSubTapDefinition = jsonFormat6(PubSubTapDefinition)
   implicit val googleStoreTapDefinition = jsonFormat4(GoogleStoreTapDefinition)
   implicit val bigQueryTapDefinition = jsonFormat6(BigQueryTapDefinition)
   implicit val bigTableTapDefinition = jsonFormat6(BigTableTapDefinition)
@@ -200,7 +200,10 @@ object SOTMacroJsonConfig {
         case Seq(JsString(typ)) if typ == "pubsub" =>
           value.asJsObject.getFields("type", "id", "topic") match {
             case Seq(JsString(objType), JsString(id), JsString(topic)) =>
-              PubSubTapDefinition(`type` = objType, id = id, topic = topic)
+              PubSubTapDefinition(`type` = objType, id = id, topic = topic,
+                managedSubscription = value.asJsObject.fields.get("managedSubscription").map(_.convertTo[Boolean]),
+                timestampAttribute = value.asJsObject.fields.get("timestampAttribute").map(_.convertTo[String]),
+                idAttribute = value.asJsObject.fields.get("idAttribute").map(_.convertTo[String]))
             case _ => deserializationError("Pubsub source expected")
           }
         case Seq(JsString(typ)) if typ == "googlestore" =>
@@ -230,32 +233,11 @@ object SOTMacroJsonConfig {
               DatastoreTapDefinition(`type` = objType, id = id, kind = kind, dedupCommits = dedupCommits)
             case _ => deserializationError("Datastore source expected")
           }
-        case Seq(JsString(typ)) if typ == "pubsub" =>
-          value.asJsObject.getFields("type", "id", "topic") match {
-            case Seq(JsString(objType), JsString(id), JsString(topic)) =>
-              PubSubTapDefinition(`type` = objType, id = id, topic = topic)
-            case _ => deserializationError("Pubsub source expected")
-          }
         case Seq(JsString(typ)) if typ == "googlestore" =>
           value.asJsObject.getFields("type", "id", "bucket", "blob") match {
             case Seq(JsString(objType), JsString(id), JsString(bucket), JsString(blob)) =>
               GoogleStoreTapDefinition(`type` = objType, id = id, bucket = bucket, blob = blob)
             case _ => deserializationError("GoogleStore source expected")
-          }
-        case Seq(JsString(typ)) if typ == "bigquery" =>
-          value.asJsObject.getFields("type", "id", "dataset", "table") match {
-            case Seq(objType, name, dataset, table) =>
-              BigQueryTapDefinition(`type` = objType.convertTo[String], id = name.convertTo[String],
-                dataset = dataset.convertTo[String], table = table.convertTo[String], writeDisposition = value.asJsObject.fields.get("writeDisposition").map(_.convertTo[String]),
-                createDisposition = value.asJsObject.fields.get("createDisposition").map(_.convertTo[String]))
-            case _ => deserializationError("BigQuery source expected")
-          }
-        case Seq(JsString(typ)) if typ == "bigtable" =>
-          value.asJsObject.getFields("type", "id", "instanceId", "tableId", "familyName", "numNodes") match {
-            case Seq(JsString(objType), JsString(id), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
-              val fn = familyName.convertTo[List[String]]
-              BigTableTapDefinition(`type` = objType, id = id, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
-            case _ => deserializationError("BigTable source expected")
           }
         case _ => deserializationError("Source expected")
       }

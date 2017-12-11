@@ -81,7 +81,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema),
         BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut))
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
+      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = Some(false), timestampAttribute = Some("timestampAttribute"), idAttribute = Some("idAttribute")),
         BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = Some("CREATE_NEVER")))
 
       val dag = List(
@@ -145,7 +145,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(ProtobufSchema(`type` = "protobuf", id = "protoschema1", name = "protoschema1", version = "version2", definition = schema),
         BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut))
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
+      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = None, timestampAttribute = Some("timestampAttribute")),
         BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = None))
 
       val dag = List(
@@ -214,7 +214,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val schemas = List(inSchema)
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout"),
+      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = Some("idAttribute"), timestampAttribute = None),
         BigTableTapDefinition(`type` = "bigtable", id = "bigtablesource1", instanceId = "bigtable-test",
           tableId = "bigquerytest", familyName = List("cf"), numNodes = 3))
 
@@ -329,8 +329,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(inSchema, outSchema)
 
       val sources = List(
-        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
-        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource2", topic = "p2pout")
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = Some(false), timestampAttribute = None, idAttribute = None),
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource2", topic = "p2pout", managedSubscription = None, timestampAttribute = None, idAttribute = None)
       )
 
       val dag = List(
@@ -395,7 +395,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(inSchema)
 
       val sources = List(
-        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = Some(true), timestampAttribute = Some("timestampAttribute"), idAttribute = None),
         DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupCommits = false)
       )
 
@@ -490,7 +490,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val schemas = List(inSchema, outSchema)
 
       val sources = List(
-        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin"),
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = None, timestampAttribute = None, idAttribute = None),
         DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupCommits = false)
       )
 

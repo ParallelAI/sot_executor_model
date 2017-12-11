@@ -47,7 +47,9 @@
     {
       "type": "pubsub",
       "id": "pubsubsource1",
-      "topic": "p2pin"
+      "topic": "p2pin",
+      "managedSubscription": true,
+      "timestampAttribute": "timestampAttribute"
     },
     {
       "type": "datastore",

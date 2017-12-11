@@ -79,7 +79,10 @@
     {
       "type": "pubsub",
       "id":  "pubsubsource1",
-      "topic": "p2pout"
+      "topic": "p2pout",
+      "managedSubscription": false,
+      "timestampAttribute": "timestampAttribute",
+      "idAttribute": "idAttribute"
     },
     {
       "type": "bigquery",
