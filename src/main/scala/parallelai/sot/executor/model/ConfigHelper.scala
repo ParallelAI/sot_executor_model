@@ -16,14 +16,8 @@ object ConfigHelper {
 
     val dag = c.parseDAG()
 
-    //no in or out-going branches
-    require(dag.findWithIncomingEdges().isEmpty)
-
     //no unconnected vertices
     require(dag.unconnected == 0)
-
-    //one sink and one source only
-    require(dag.getSourceVertices().size == 1)
 
     dag
   }
