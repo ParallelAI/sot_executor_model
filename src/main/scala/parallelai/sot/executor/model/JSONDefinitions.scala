@@ -1,7 +1,6 @@
 package parallelai.sot.executor.model
 
 import java.io.InputStream
-import scala.collection.immutable.Seq
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -25,9 +24,11 @@ object SOTMacroConfig {
     def definition: Definition
   }
 
-  sealed trait TapDefinition {
+  sealed trait TapDefinitionType {
     def `type`: String
+  }
 
+  sealed trait TapDefinition extends TapDefinitionType {
     def id: String
   }
 
@@ -76,7 +77,13 @@ object SOTMacroConfig {
 
   case class DatastoreTapDefinition(`type`: String, id: String, kind: String, dedupCommits: Boolean) extends TapDefinition
 
-  case class SeqTapDefinition[T <: Product](`type`: String = "sequenceTapDefinition", id: String = "sequenceTapDefinition", content: Seq[T]) extends TapDefinition
+  object SeqTapDefinition extends TapDefinitionType {
+    val `type` = "sequence"
+  }
+
+  case class SeqTapDefinition[T <: Product](id: String = "sequenceTapDefinition", content: Seq[T]) extends TapDefinition {
+    def `type`: String = SeqTapDefinition.`type`
+  }
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
