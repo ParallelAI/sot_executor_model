@@ -9,20 +9,6 @@ lazy val root = (project in file("."))
       organization := "parallelai",
       scalaVersion := "2.11.11"
     )),
-    scalacOptions ++= Seq(
-      "–verbose",
-      "-deprecation",           // Emit warning and location for usages of deprecated APIs.
-      "-feature",               // Emit warning and location for usages of features that should be imported explicitly.
-      "-unchecked",             // Enable additional warnings where generated code depends on assumptions.
-      "-Xlint",                 // Enable recommended additional warnings.
-      "-Ywarn-adapted-args",    // Warn if an argument list is modified to match the receiver.
-      "-Ywarn-dead-code",
-      "-Ywarn-value-discard",   // Warn when non-Unit expression results are unused.
-      "-Ypartial-unification",
-      "-language:postfixOps",
-      "-language:higherKinds",
-      "-language:existentials"
-    ),
     crossScalaVersions := Seq("2.11.11", "2.12.3"),
     s3region := Region.getRegion(Regions.EU_WEST_2),
     publishTo := {
