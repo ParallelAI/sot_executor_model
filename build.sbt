@@ -10,7 +10,6 @@ lazy val root = (project in file("."))
       scalaVersion := "2.11.11"
     )),
     scalacOptions ++= Seq(
-      "–optimise",
       "–verbose",
       "-deprecation",           // Emit warning and location for usages of deprecated APIs.
       "-feature",               // Emit warning and location for usages of features that should be imported explicitly.
