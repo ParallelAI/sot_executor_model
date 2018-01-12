@@ -1,6 +1,6 @@
 package parallelai.sot.executor.model
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import parallelai.sot.executor.model.SOTMacroConfig._
 import parallelai.sot.executor.model.SOTMacroJsonConfig._
 import spray.json._
@@ -78,11 +78,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[BigQueryDefinition]
 
-      val schemas = List(AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema),
-        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut))
+      val schemas = List(
+        AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema),
+        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut)
+      )
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = Some(false), timestampAttribute = Some("timestampAttribute"), idAttribute = Some("idAttribute")),
-        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = Some("CREATE_NEVER")))
+      val sources = List(
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = Some(false), timestampAttribute = Some("timestampAttribute"), idAttribute = Some("idAttribute")),
+        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = Some("CREATE_NEVER"))
+      )
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -142,11 +146,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[BigQueryDefinition]
 
-      val schemas = List(ProtobufSchema(`type` = "protobuf", id = "protoschema1", name = "protoschema1", version = "version2", definition = schema),
-        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut))
+      val schemas = List(
+        ProtobufSchema(`type` = "protobuf", id = "protoschema1", name = "protoschema1", version = "version2", definition = schema),
+        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut)
+      )
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = None, timestampAttribute = Some("timestampAttribute")),
-        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = None))
+      val sources = List(
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = None, timestampAttribute = Some("timestampAttribute")),
+        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = None)
+      )
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -214,9 +222,11 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val schemas = List(inSchema)
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = Some("idAttribute"), timestampAttribute = None),
+      val sources = List(
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = Some("idAttribute"), timestampAttribute = None),
         BigTableTapDefinition(`type` = "bigtable", id = "bigtablesource1", instanceId = "bigtable-test",
-          tableId = "bigquerytest", familyName = List("cf"), numNodes = 3))
+          tableId = "bigquerytest", familyName = List("cf"), numNodes = 3)
+      )
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -587,7 +597,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       ))
       val expectedJSONSchema = JSONSchema(`type` = "json", id = "jsonschema1", name = "jsonschema1name", version = "version1", definition = expectedDefinition)
 
-      jsonSchema should be (expectedJSONSchema)
+      jsonSchema should be(expectedJSONSchema)
 
     }
 

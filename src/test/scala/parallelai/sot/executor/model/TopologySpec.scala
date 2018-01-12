@@ -1,19 +1,19 @@
 package parallelai.sot.executor.model
 
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
+import org.scalatest.{ BeforeAndAfterAll, Matchers, WordSpec }
 import parallelai.sot.executor.model.SOTMacroConfig.DAGMapping
 
 import scala.util.Success
 
-class TopologySpec extends WordSpec with Matchers with BeforeAndAfterAll{
+class TopologySpec extends WordSpec with Matchers with BeforeAndAfterAll {
 
   case class Vertex(label: String)
 
   case class Edge(from: Vertex, to: Vertex)
     extends Topology.Edge[Vertex]
 
-  var top : Topology[Vertex, Edge] = _
-  var topFromFile : Topology[String, DAGMapping] = _
+  var top: Topology[Vertex, Edge] = _
+  var topFromFile: Topology[String, DAGMapping] = _
 
   override def beforeAll(): Unit = {
 
@@ -108,14 +108,14 @@ class TopologySpec extends WordSpec with Matchers with BeforeAndAfterAll{
     "check if any vertex has more than one incoming edges from file" in {
 
       val incomingEdges = topFromFile.findWithIncomingEdges()
-      incomingEdges should be (Set())
+      incomingEdges should be(Set())
 
     }
 
     "check if any vertex has more than one outgoing edges from file" in {
 
       val outgoingEdges = topFromFile.findWithOutgoingEdges()
-      outgoingEdges should be (Set())
+      outgoingEdges should be(Set())
 
     }
 
