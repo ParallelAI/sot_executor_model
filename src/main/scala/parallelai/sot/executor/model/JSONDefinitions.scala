@@ -1,6 +1,7 @@
 package parallelai.sot.executor.model
 
 import java.io.InputStream
+
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -84,6 +85,8 @@ object SOTMacroConfig {
   case class SeqTapDefinition[T <: Product](id: String = "sequenceTapDefinition", content: Seq[T]) extends TapDefinition {
     def `type`: String = SeqTapDefinition.`type`
   }
+
+  case class KafkaTapDefinition(`type`: String, id: String, bootstrap: String, topic: String, group: String, defaultOffset: String) extends TapDefinition
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
@@ -214,6 +217,9 @@ object SOTMacroJsonConfig {
   implicit val datastoreTapDefinition: RootJsonFormat[DatastoreTapDefinition] =
     jsonFormat4(DatastoreTapDefinition)
 
+  implicit val kafkaTapDefinition: RootJsonFormat[KafkaTapDefinition] =
+    jsonFormat6(KafkaTapDefinition)
+
   implicit object SourceJsonFormat extends RootJsonFormat[TapDefinition] {
     def write(s: TapDefinition): JsValue =
       s match {
@@ -222,6 +228,7 @@ object SOTMacroJsonConfig {
         case j: BigQueryTapDefinition => j.toJson
         case j: BigTableTapDefinition => j.toJson
         case j: DatastoreTapDefinition => j.toJson
+        case j: KafkaTapDefinition => s.toJson
       }
 
     def read(value: JsValue): TapDefinition = {
@@ -272,6 +279,14 @@ object SOTMacroJsonConfig {
             case Seq(JsString(objType), JsString(id), JsString(bucket), JsString(blob)) =>
               GoogleStoreTapDefinition(`type` = objType, id = id, bucket = bucket, blob = blob)
             case _ => deserializationError("GoogleStore source expected")
+          }
+
+        case Seq(JsString(typ)) if typ == "kafka" =>
+          value.asJsObject.getFields("type", "id", "bootstrap", "topic", "group", "defaultOffset") match {
+            case Seq(JsString(objType), JsString(id), JsString(bootstrap), JsString(topic), JsString(group), JsString(defaultOffset)) =>
+              KafkaTapDefinition(`type` = objType, id = id, bootstrap = bootstrap, topic = topic, group = group,
+                defaultOffset = defaultOffset)
+            case _ => deserializationError("Kafka source expected")
           }
 
         case _ => deserializationError("Source expected")
