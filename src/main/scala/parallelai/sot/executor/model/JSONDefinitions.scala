@@ -86,7 +86,13 @@ object SOTMacroConfig {
     def `type`: String = SeqTapDefinition.`type`
   }
 
-  case class KafkaTapDefinition(`type`: String, id: String, bootstrap: String, topic: String, group: String, defaultOffset: String) extends TapDefinition
+  object KafkaTapDefinitionType extends TapDefinitionType {
+    val `type` = "kafka"
+  }
+
+  case class KafkaTapDefinition(id: String, bootstrap: String, topic: String, group: Option[String], defaultOffset: Option[String]) extends TapDefinition {
+    def `type`: String = KafkaTapDefinitionType.`type`
+  }
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
@@ -218,7 +224,7 @@ object SOTMacroJsonConfig {
     jsonFormat4(DatastoreTapDefinition)
 
   implicit val kafkaTapDefinition: RootJsonFormat[KafkaTapDefinition] =
-    jsonFormat6(KafkaTapDefinition)
+    jsonFormat5(KafkaTapDefinition)
 
   implicit object SourceJsonFormat extends RootJsonFormat[TapDefinition] {
     def write(s: TapDefinition): JsValue =
@@ -282,10 +288,11 @@ object SOTMacroJsonConfig {
           }
 
         case Seq(JsString(typ)) if typ == "kafka" =>
-          value.asJsObject.getFields("type", "id", "bootstrap", "topic", "group", "defaultOffset") match {
-            case Seq(JsString(objType), JsString(id), JsString(bootstrap), JsString(topic), JsString(group), JsString(defaultOffset)) =>
-              KafkaTapDefinition(`type` = objType, id = id, bootstrap = bootstrap, topic = topic, group = group,
-                defaultOffset = defaultOffset)
+          value.asJsObject.getFields("id", "bootstrap", "topic") match {
+            case Seq(JsString(id), JsString(bootstrap), JsString(topic)) =>
+              KafkaTapDefinition(id = id, bootstrap = bootstrap, topic = topic,
+                group = value.asJsObject.fields.get("group").map(_.convertTo[String]),
+                defaultOffset = value.asJsObject.fields.get("defaultOffset").map(_.convertTo[String]))
             case _ => deserializationError("Kafka source expected")
           }
 
