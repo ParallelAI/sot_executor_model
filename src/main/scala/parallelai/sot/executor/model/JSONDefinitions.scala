@@ -441,7 +441,7 @@ object SOTMacroJsonConfig {
         case Seq(JsString(typ)) if typ == "tfpredict" => {
           value.asJsObject.getFields("type", "id", "name", "modelBucket", "modelPath", "fetchOps", "inFn", "outFn") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(modelBucket), JsString(modelPath),
-            JsArray(fetchOps), JsString(inFn), JsString(outFn)) =>
+              JsArray(fetchOps), JsString(inFn), JsString(outFn)) =>
               val fOps = fetchOps.map(_.convertTo[String])
               TFPredictOp(`type` = objType, id = id, name = name, modelBucket = modelBucket, modelPath = modelPath, fetchOps = fOps,
                 inFn = inFn, outFn = outFn)
