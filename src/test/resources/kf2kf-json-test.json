@@ -45,7 +45,8 @@
       "bootstrap": "0.0.0.0:9092",
       "topic": "my-topic",
       "group": "my-group",
-      "defaultOffset" : "latest"
+      "defaultOffset": "latest",
+      "autoCommit": false
     },
     {
       "type": "kafka",

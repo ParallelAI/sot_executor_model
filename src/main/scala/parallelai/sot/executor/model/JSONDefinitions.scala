@@ -90,7 +90,7 @@ object SOTMacroConfig {
     val `type` = "kafka"
   }
 
-  case class KafkaTapDefinition(id: String, bootstrap: String, topic: String, group: Option[String], defaultOffset: Option[String]) extends TapDefinition {
+  case class KafkaTapDefinition(id: String, bootstrap: String, topic: String, group: Option[String], defaultOffset: Option[String], autoCommit: Option[Boolean]) extends TapDefinition {
     def `type`: String = KafkaTapDefinitionType.`type`
   }
 
@@ -118,9 +118,11 @@ object SOTMacroConfig {
   case class SourceOp(`type`: String, id: String, name: String, schema: String, tap: String) extends OpType
 
   case class SinkOp(`type`: String, id: String, name: String, schema: Option[String], tap: String) extends OpType
+
 }
 
 object SOTMacroJsonConfig {
+
   import SOTMacroConfig._
 
   implicit val avroDefinitionFormat: RootJsonFormat[AvroDefinition] =
@@ -224,7 +226,7 @@ object SOTMacroJsonConfig {
     jsonFormat4(DatastoreTapDefinition)
 
   implicit val kafkaTapDefinition: RootJsonFormat[KafkaTapDefinition] =
-    jsonFormat5(KafkaTapDefinition)
+    jsonFormat6(KafkaTapDefinition)
 
   implicit object SourceJsonFormat extends RootJsonFormat[TapDefinition] {
     def write(s: TapDefinition): JsValue =
@@ -292,7 +294,8 @@ object SOTMacroJsonConfig {
             case Seq(JsString(id), JsString(bootstrap), JsString(topic)) =>
               KafkaTapDefinition(id = id, bootstrap = bootstrap, topic = topic,
                 group = value.asJsObject.fields.get("group").map(_.convertTo[String]),
-                defaultOffset = value.asJsObject.fields.get("defaultOffset").map(_.convertTo[String]))
+                defaultOffset = value.asJsObject.fields.get("defaultOffset").map(_.convertTo[String]),
+                autoCommit = value.asJsObject.fields.get("autoCommit").map(_.convertTo[Boolean]))
             case _ => deserializationError("Kafka source expected")
           }
 
@@ -438,7 +441,7 @@ object SOTMacroJsonConfig {
         case Seq(JsString(typ)) if typ == "tfpredict" => {
           value.asJsObject.getFields("type", "id", "name", "modelBucket", "modelPath", "fetchOps", "inFn", "outFn") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(modelBucket), JsString(modelPath),
-              JsArray(fetchOps), JsString(inFn), JsString(outFn)) =>
+            JsArray(fetchOps), JsString(inFn), JsString(outFn)) =>
               val fOps = fetchOps.map(_.convertTo[String])
               TFPredictOp(`type` = objType, id = id, name = name, modelBucket = modelBucket, modelPath = modelPath, fetchOps = fOps,
                 inFn = inFn, outFn = outFn)

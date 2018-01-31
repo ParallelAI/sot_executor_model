@@ -8,7 +8,7 @@ import spray.json._
 class KafkaTapDefinitionSpec extends FlatSpec with MustMatchers {
   "KafkaTapDefinition" should "be of expected type" in {
 
-    val tapDefinition = KafkaTapDefinition(id = "my-id", bootstrap = "my-bootstrap", topic = "my-topic", group = None, defaultOffset = None)
+    val tapDefinition = KafkaTapDefinition(id = "my-id", bootstrap = "my-bootstrap", topic = "my-topic", group = None, defaultOffset = None, autoCommit = None)
 
     tapDefinition.`type` mustEqual KafkaTapDefinitionType.`type`
   }
@@ -58,8 +58,8 @@ class KafkaTapDefinitionSpec extends FlatSpec with MustMatchers {
     val schemas = List(inSchema)
 
     val sources = List(
-      KafkaTapDefinition(id = "kafkasource1", bootstrap = "0.0.0.0:9092", topic = "my-topic", group = Some("my-group"), defaultOffset = Some("latest")),
-      KafkaTapDefinition(id = "kafkasource2", bootstrap = "127.0.0.1:9092", topic = "my-topic-out", group = None, defaultOffset = None)
+      KafkaTapDefinition(id = "kafkasource1", bootstrap = "0.0.0.0:9092", topic = "my-topic", group = Some("my-group"), defaultOffset = Some("latest"), autoCommit = Some(false)),
+      KafkaTapDefinition(id = "kafkasource2", bootstrap = "127.0.0.1:9092", topic = "my-topic-out", group = None, defaultOffset = None, autoCommit = None)
     )
 
     val dag = List(
