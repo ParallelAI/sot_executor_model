@@ -1,6 +1,6 @@
 package parallelai.sot.executor.model
 
-import org.scalatest.{FlatSpec, MustMatchers}
+import org.scalatest.{ FlatSpec, MustMatchers }
 import parallelai.sot.executor.model.SOTMacroConfig._
 import parallelai.sot.executor.model.SOTMacroJsonConfig._
 import spray.json._
@@ -8,12 +8,12 @@ import spray.json._
 class KafkaTapDefinitionSpec extends FlatSpec with MustMatchers {
   "KafkaTapDefinition" should "be of expected type" in {
 
-      val tapDefinition = KafkaTapDefinition(id = "my-id", bootstrap = "my-bootstrap", topic = "my-topic", group = None, defaultOffset = None)
+    val tapDefinition = KafkaTapDefinition(id = "my-id", bootstrap = "my-bootstrap", topic = "my-topic", group = None, defaultOffset = None)
 
-      tapDefinition.`type` mustEqual KafkaTapDefinitionType.`type`
+    tapDefinition.`type` mustEqual KafkaTapDefinitionType.`type`
   }
 
-  it should  "be correctly initialised as source and sink" in {
+  it should "be correctly initialised as source and sink" in {
 
     val config = SOTMacroJsonConfig("kf2kf-json-test.json")
 
@@ -76,6 +76,6 @@ class KafkaTapDefinitionSpec extends FlatSpec with MustMatchers {
     val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
       taps = sources, schemas = schemas, dag = dag, steps = steps)
     println()
-    expectedConfig must equal (config)
+    expectedConfig must equal(config)
   }
 }
