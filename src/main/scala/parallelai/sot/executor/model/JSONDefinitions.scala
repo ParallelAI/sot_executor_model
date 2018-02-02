@@ -33,6 +33,17 @@ object SOTMacroConfig {
     def id: String
   }
 
+  sealed trait LookupDefinition {
+    def id: String
+
+    def schema: String
+
+    def tap: String
+  }
+
+  /** Lookup Definitions **/
+  case class DatastoreLookupDefinition(id: String, schema: String, tap: String) extends LookupDefinition
+
   /** Schema Definitions **/
   case class AvroDefinition(`type`: String, name: String, namespace: String, fields: JsArray) extends Definition
 
@@ -96,7 +107,7 @@ object SOTMacroConfig {
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
-  case class Config(id: String, name: String, version: String, schemas: List[Schema], taps: List[TapDefinition], dag: List[DAGMapping], steps: List[OpType]) {
+  case class Config(id: String, name: String, version: String, schemas: List[Schema], lookups: List[LookupDefinition] = Nil, taps: List[TapDefinition], dag: List[DAGMapping], steps: List[OpType]) {
     def parseDAG(): Topology[String, DAGMapping] = {
       val vertices = (dag.map(_.from) ++ dag.map(_.to)).distinct
       Topology.createTopology(vertices, dag)
@@ -454,11 +465,21 @@ object SOTMacroJsonConfig {
     }
   }
 
+  implicit object lookupDefinitionFormat extends RootJsonFormat[LookupDefinition] {
+    implicit val datastoreFormat: RootJsonFormat[DatastoreLookupDefinition] = jsonFormat3(DatastoreLookupDefinition)
+
+    def read(json: JsValue) = datastoreFormat.read(json)
+
+    def write(obj: LookupDefinition) = obj match {
+      case d: DatastoreLookupDefinition => d.toJson
+    }
+  }
+
   implicit val dagFormat: RootJsonFormat[DAGMapping] =
     jsonFormat2(DAGMapping)
 
   implicit val configFormat: RootJsonFormat[Config] =
-    jsonFormat7(Config)
+    jsonFormat8(Config)
 
   def apply(fileName: String): Config = {
     val stream: InputStream = getClass.getResourceAsStream("/" + fileName)

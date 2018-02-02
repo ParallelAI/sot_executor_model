@@ -42,6 +42,7 @@
       }
     }
   ],
+  "lookups": [],
   "taps" : [
     {
       "type": "pubsub",

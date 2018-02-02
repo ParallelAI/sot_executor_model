@@ -74,7 +74,7 @@ class KafkaTapDefinitionSpec extends FlatSpec with MustMatchers {
     )
 
     val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
-      taps = sources, schemas = schemas, dag = dag, steps = steps)
+      taps = sources, schemas = schemas, lookups = Nil, dag = dag, steps = steps)
     println()
     expectedConfig must equal(config)
   }
