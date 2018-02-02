@@ -43,31 +43,57 @@
       }
     },
     {
-      "type": "datastore",
-      "id": "datastore1",
-      "name": "datastore1",
-      "version": "version3",
+      "type": "avro",
+      "id": "avroschema2",
+      "name": "avroschema2",
+      "version": "version2",
       "definition": {
-        "type": "datastoredefinition",
-        "name": "OutSchema",
+        "type": "record",
+        "name": "MessageExtended",
+        "namespace": "parallelai.sot.avro",
         "fields": [
           {
-            "name": "teamscores",
-            "type": "String"
+            "name": "user",
+            "type": "string",
+            "doc": "Name of the user"
           },
           {
-            "name": "score1",
-            "type": "String"
+            "name": "teamName",
+            "type": "string",
+            "doc": "Name of the team"
           },
           {
-            "name": "score2",
-            "type": "Double"
+            "name": "score",
+            "type": "int",
+            "doc": "User score"
+          },
+          {
+            "name": "eventTime",
+            "type": "long",
+            "doc": "time when event created"
+          },
+          {
+            "name": "eventTimeStr",
+            "type": "string",
+            "doc": "event time string for debugging"
+          },
+          {
+            "name": "count",
+            "type": "int",
+            "doc": "example count"
           }
-        ]
+        ],
+        "doc": "A basic schema for storing user records"
       }
     }
   ],
-  "lookups": [],
+  "lookups": [
+    {
+      "schema": "avroschema1",
+      "id": "lookup1",
+      "tap": "datastore1"
+    }
+  ],
   "taps": [
     {
       "type": "pubsub",
@@ -75,10 +101,15 @@
       "topic": "p2pin"
     },
     {
+      "type": "pubsub",
+      "id": "pubsubsource2",
+      "topic": "p2pout"
+    },
+    {
       "type": "datastore",
-      "id": "datastoresource1",
-      "kind": "kind1",
-      "dedupCommits": false
+      "id": "datastore1",
+      "kind": "dataflowwrite",
+      "dedupCommits": true
     }
   ],
   "steps": [
@@ -94,60 +125,28 @@
       "id": "mapper1",
       "name": "mapper1",
       "op": "map",
-      "params": [["m => (m.teamName, m.score.toInt)"]],
-      "paramsEncoded": false
-    },
-    {
-      "type": "transformation",
-      "id": "filter",
-      "name": "filter",
-      "op": "filter",
-      "params": [["m => m.score > 2"]],
-      "paramsEncoded": false
-    },
-    {
-      "type": "transformation",
-      "id": "mapper2",
-      "name": "mapper2",
-      "op": "map",
-      "params": [["m => OutSchema(m._1, m._2.toString, m._2 * 0.123)"]],
-      "paramsEncoded": false
-    },
-    {
-      "type": "transformation",
-      "id": "sumByKey",
-      "name": "sumByKey",
-      "op": "sumByKey",
-      "params": [[""]],
+      "params": [
+        [
+          "m => m.append('count, lookup1.get(\"blah\").map(_.score).getOrElse(1))"
+        ]
+      ],
       "paramsEncoded": false
     },
     {
       "type": "sink",
       "id": "out",
       "name": "out",
-      "schema": "datastore1",
-      "source": "datastoresource1"
+      "schema": "avroschema2",
+      "source": "pubsubsource2"
     }
   ],
   "dag": [
     {
       "from": "in",
-      "to": "filter"
-    },
-    {
-      "from": "filter",
       "to": "mapper1"
     },
     {
       "from": "mapper1",
-      "to": "sumByKey"
-    },
-    {
-      "from": "sumByKey",
-      "to": "mapper2"
-    },
-    {
-      "from": "mapper2",
       "to": "out"
     }
   ]
