@@ -127,7 +127,6 @@ object SOTMacroConfig {
   case class SourceOp(`type`: String, id: String, name: String, schema: String, tap: String) extends OpType
 
   case class SinkOp(`type`: String, id: String, name: String, schema: Option[String], tap: String) extends OpType
-
 }
 
 object SOTMacroJsonConfig extends SOTMacroJsonConfig
@@ -159,7 +158,7 @@ trait SOTMacroJsonConfig {
   implicit val bytearrayDefinitionFormat: RootJsonFormat[ByteArrayDefinition] =
     jsonFormat2(ByteArrayDefinition)
 
-  implicit object DefinitionJsonFormat extends RootJsonFormat[Definition] {
+  implicit val definitionJsonFormat: RootJsonFormat[Definition] = new RootJsonFormat[Definition] {
     def write(c: Definition): JsValue = c match {
       case s: AvroDefinition => s.toJson
       case s: ProtobufDefinition => s.toJson
@@ -238,7 +237,7 @@ trait SOTMacroJsonConfig {
   implicit val kafkaTapDefinition: RootJsonFormat[KafkaTapDefinition] =
     jsonFormat6(KafkaTapDefinition)
 
-  implicit object SourceJsonFormat extends RootJsonFormat[TapDefinition] {
+  implicit val sourceJsonFormat: RootJsonFormat[TapDefinition] = new RootJsonFormat[TapDefinition] {
     def write(s: TapDefinition): JsValue =
       s match {
         case j: PubSubTapDefinition => j.toJson
@@ -332,7 +331,7 @@ trait SOTMacroJsonConfig {
   implicit val byteArraySchemaFormat: RootJsonFormat[ByteArraySchema] =
     jsonFormat5(ByteArraySchema)
 
-  implicit object SchemaJsonFormat extends RootJsonFormat[Schema] {
+  implicit val schemaJsonFormat: RootJsonFormat[Schema] = new RootJsonFormat[Schema] {
     def write(c: Schema): JsValue =
       c match {
         case s: AvroSchema => s.toJson
@@ -404,7 +403,7 @@ trait SOTMacroJsonConfig {
   implicit val sourceOpFormat: RootJsonFormat[SourceOp] =
     jsonFormat5(SourceOp)
 
-  implicit object OpJsonFormat extends RootJsonFormat[OpType] {
+  implicit val opJsonFormat: RootJsonFormat[OpType] = new RootJsonFormat[OpType] {
     def write(c: OpType): JsValue = {
       c match {
         case s: TFPredictOp => s.toJson
@@ -454,7 +453,7 @@ trait SOTMacroJsonConfig {
     }
   }
 
-  implicit object lookupDefinitionFormat extends RootJsonFormat[LookupDefinition] {
+  implicit val lookupDefinitionFormat: RootJsonFormat[LookupDefinition] = new RootJsonFormat[LookupDefinition] {
     implicit val datastoreFormat: RootJsonFormat[DatastoreLookupDefinition] = jsonFormat3(DatastoreLookupDefinition)
 
     def read(json: JsValue): DatastoreLookupDefinition =
