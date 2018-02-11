@@ -24,6 +24,7 @@ lazy val root = (project in file("."))
       scalaTest % Test
     ),
     libraryDependencies ++= Seq(
+      shapeless,
       sprayJson
     )
   )
