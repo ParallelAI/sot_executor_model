@@ -85,7 +85,7 @@ object SOTMacroConfig {
 
   case class BigTableTapDefinition(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends TapDefinition
 
-  case class DatastoreTapDefinition(`type`: String, id: String, kind: String, dedupCommits: Boolean) extends TapDefinition
+  case class DatastoreTapDefinition(`type`: String, id: String, kind: String, dedupeStrategy: DedupeStrategy = DedupeStrategy.NONE, allowPartialUpdates: Boolean = false) extends TapDefinition
 
   object SeqTapDefinition extends TapDefinitionType {
     val `type` = "sequence"
@@ -231,8 +231,14 @@ trait SOTMacroJsonConfig {
   implicit val bigTableTapDefinition: RootJsonFormat[BigTableTapDefinition] =
     jsonFormat6(BigTableTapDefinition)
 
+  implicit val dedupeStrategyFormat: JsonFormat[DedupeStrategy] = new JsonFormat[DedupeStrategy] {
+    def read(json: JsValue): DedupeStrategy = DedupeStrategy.valueOf(json.convertTo[String])
+
+    def write(obj: DedupeStrategy): JsValue = obj.name().toJson
+  }
+
   implicit val datastoreTapDefinition: RootJsonFormat[DatastoreTapDefinition] =
-    jsonFormat4(DatastoreTapDefinition)
+    jsonFormat5(DatastoreTapDefinition)
 
   implicit val kafkaTapDefinition: RootJsonFormat[KafkaTapDefinition] =
     jsonFormat6(KafkaTapDefinition)
@@ -285,9 +291,11 @@ trait SOTMacroJsonConfig {
           }
 
         case Seq(JsString(typ)) if typ == "datastore" =>
-          value.asJsObject.getFields("type", "id", "kind", "dedupCommits") match {
-            case Seq(JsString(objType), JsString(id), JsString(kind), JsBoolean(dedupCommits)) =>
-              DatastoreTapDefinition(`type` = objType, id = id, kind = kind, dedupCommits = dedupCommits)
+          value.asJsObject.getFields("type", "id", "kind", "dedupeStrategy", "allowPartialUpdates") match {
+            case Seq(JsString(objType), JsString(id), JsString(kind), dedupeStrategy, JsBoolean(allowPartialUpdates)) =>
+              DatastoreTapDefinition(`type` = objType, id = id, kind = kind, dedupeStrategy = dedupeStrategy.convertTo[DedupeStrategy], allowPartialUpdates = allowPartialUpdates)
+            case Seq(JsString(objType), JsString(id), JsString(kind), dedupeStrategy) =>
+              DatastoreTapDefinition(`type` = objType, id = id, kind = kind, dedupeStrategy = dedupeStrategy.convertTo[DedupeStrategy])
             case _ => deserializationError("Datastore source expected")
           }
 
