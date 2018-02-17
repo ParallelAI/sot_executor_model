@@ -2,14 +2,17 @@ import scala.language.postfixOps
 import com.amazonaws.regions.{Region, Regions}
 import Dependencies._
 
+lazy val scala_2_11 = "2.11.11"
+lazy val scala_2_12 = "2.12.4"
+
 lazy val root = (project in file("."))
   .settings(
     name := "sot_executor_model",
     inThisBuild(List(
       organization := "parallelai",
-      scalaVersion := "2.11.11"
+      scalaVersion := scala_2_11
     )),
-    crossScalaVersions := Seq("2.11.11", "2.12.3"),
+    crossScalaVersions := Seq(scala_2_11, scala_2_12),
     s3region := Region.getRegion(Regions.EU_WEST_2),
     publishTo := {
       val prefix = if (isSnapshot.value) "snapshot" else "release"

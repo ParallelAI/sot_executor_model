@@ -1,7 +1,7 @@
 import sbt._
 
 object Dependencies {
-  val scalaTest = "org.scalatest" %% "scalatest" % "3.0.3"
+  val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4"
 
   val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
 
