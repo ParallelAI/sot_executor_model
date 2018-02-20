@@ -406,7 +406,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val sources = List(
         PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = Some(true), timestampAttribute = Some("timestampAttribute"), idAttribute = None),
-        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupCommits = false)
+        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupeStrategy = DedupeStrategy.NONE, allowPartialUpdates = true)
       )
 
       val dag = List(
@@ -501,7 +501,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val sources = List(
         PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = None, timestampAttribute = None, idAttribute = None),
-        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupCommits = false)
+        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupeStrategy = DedupeStrategy.NONE)
       )
 
       val dag = List(
@@ -618,7 +618,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val sources = List(
         PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = None, timestampAttribute = None, idAttribute = None),
         PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource2", topic = "p2pout", managedSubscription = None, timestampAttribute = None, idAttribute = None),
-        DatastoreTapDefinition(`type` = "datastore", id = "datastore1", kind = "dataflowwrite", dedupCommits = true)
+        DatastoreTapDefinition(`type` = "datastore", id = "datastore1", kind = "dataflowwrite", dedupeStrategy = DedupeStrategy.KEEP_LATEST)
       )
 
       val dag = List(
