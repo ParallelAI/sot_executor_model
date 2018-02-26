@@ -63,7 +63,7 @@
       "id": "in",
       "name": "in",
       "schema": "protoschema1",
-      "source": "pubsubsource1"
+      "tap": "pubsubsource1"
     },
     {
       "type": "transformation",
@@ -102,7 +102,7 @@
       "id": "out",
       "name": "out",
       "schema": "bigqueryschema1",
-      "source": "bigquerysource1"
+      "tap": "bigquerysource1"
     }
   ],
   "dag": [

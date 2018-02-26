@@ -424,18 +424,20 @@ trait SOTMacroJsonConfig {
     def read(value: JsValue): OpType = {
       value.asJsObject.getFields("type") match {
         case Seq(JsString(typ)) if typ == "source" =>
-          value.asJsObject.getFields("type", "id", "name", "schema", "source") match {
-            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(source)) =>
-              SourceOp(`type` = objType, id = id, name = name, schema = schema, tap = source)
+          value.asJsObject.getFields("type", "id", "name", "schema", "tap") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(tap)) =>
+              SourceOp(`type` = objType, id = id, name = name, schema = schema, tap = tap)
             case _ => deserializationError("SourceOp type expected")
           }
 
         case Seq(JsString(typ)) if typ == "sink" =>
-          value.asJsObject.getFields("type", "id", "name", "source", "schema") match {
-            case Seq(JsString(objType), JsString(id), JsString(name), JsString(source), JsString(schema)) =>
-              SinkOp(`type` = objType, id = id, name = name, schema = Some(schema), tap = source)
-            case Seq(JsString(objType), JsString(id), JsString(name), JsString(source)) =>
-              SinkOp(`type` = objType, id = id, name = name, schema = None, tap = source)
+          value.asJsObject.getFields("type", "id", "name", "schema", "tap") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(tap)) =>
+              SinkOp(`type` = objType, id = id, name = name, schema = Option(schema), tap = tap)
+
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(tap)) =>
+              SinkOp(`type` = objType, id = id, name = name, schema = None, tap = tap)
+
             case _ => deserializationError("SinkOp type expected")
           }
 

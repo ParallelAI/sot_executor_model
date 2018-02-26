@@ -6,11 +6,10 @@ import parallelai.sot.executor.model.SOTMacroJsonConfig._
 import spray.json._
 
 class JSONDefinitionsSpec extends WordSpec with Matchers {
-
   "SOTMacroConfig" should {
-
     "build pubsub to bigquery config" in {
       val config = SOTMacroJsonConfig("ps2bq-test.json")
+
       val schema =
         """
           |{
@@ -106,12 +105,14 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", schemas = schemas,
         lookups = Nil, taps = sources, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
 
     "build pubsub with protobuf to bigquery config" in {
       val config = SOTMacroJsonConfig("psproto2bq-test.json")
+
       val schema =
         """
           |{
@@ -174,6 +175,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", schemas = schemas,
         lookups = Nil, taps = sources, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
@@ -247,6 +249,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
         taps = sources, schemas = schemas, lookups = Nil, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
@@ -356,6 +359,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", taps = sources,
         schemas = schemas, lookups = Nil, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
@@ -428,12 +432,12 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
         taps = sources, schemas = schemas, lookups = Nil, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
 
     "build pubsub to datastore with schema config" in {
-
       val config = SOTMacroJsonConfig("ps2ds-with-schema-test.json")
 
       val def1 =
@@ -523,12 +527,12 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
         taps = sources, schemas = schemas, lookups = Nil, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
 
     "build pubsub to pubsub with lookup config" in {
-
       val config = SOTMacroJsonConfig("ps2ps-with-lookup-test.json")
 
       val schema1 =
@@ -638,12 +642,12 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
         taps = sources, schemas = schemas, lookups = lookups, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
 
     "parse nested json schema" in {
-
       val jsonSchema =
         """
           |{
@@ -713,9 +717,6 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       val expectedJSONSchema = JSONSchema(`type` = "json", id = "jsonschema1", name = "jsonschema1name", version = "version1", definition = expectedDefinition)
 
       jsonSchema should be(expectedJSONSchema)
-
     }
-
   }
-
 }
