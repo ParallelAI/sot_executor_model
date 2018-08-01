@@ -1,16 +1,15 @@
 package parallelai.sot.executor.model
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import parallelai.sot.executor.model.SOTMacroConfig._
 import parallelai.sot.executor.model.SOTMacroJsonConfig._
 import spray.json._
 
 class JSONDefinitionsSpec extends WordSpec with Matchers {
-
   "SOTMacroConfig" should {
-
     "build pubsub to bigquery config" in {
       val config = SOTMacroJsonConfig("ps2bq-test.json")
+
       val schema =
         """
           |{
@@ -78,11 +77,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[BigQueryDefinition]
 
-      val schemas = List(AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema),
-        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut))
+      val schemas = List(
+        AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema),
+        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut)
+      )
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = Some(false), timestampAttribute = Some("timestampAttribute"), idAttribute = Some("idAttribute")),
-        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = Some("CREATE_NEVER")))
+      val sources = List(
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = Some(false), timestampAttribute = Some("timestampAttribute"), idAttribute = Some("idAttribute")),
+        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = Some("CREATE_NEVER"))
+      )
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -101,13 +104,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", schemas = schemas,
-        taps = sources, dag = dag, steps = steps)
+        lookups = Nil, taps = sources, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
 
     "build pubsub with protobuf to bigquery config" in {
       val config = SOTMacroJsonConfig("psproto2bq-test.json")
+
       val schema =
         """
           |{
@@ -142,11 +147,15 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
           |    }
         """.stripMargin.stripMargin.parseJson.convertTo[BigQueryDefinition]
 
-      val schemas = List(ProtobufSchema(`type` = "protobuf", id = "protoschema1", name = "protoschema1", version = "version2", definition = schema),
-        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut))
+      val schemas = List(
+        ProtobufSchema(`type` = "protobuf", id = "protoschema1", name = "protoschema1", version = "version2", definition = schema),
+        BigQuerySchema(`type` = "bigquery", version = "version3", id = "bigqueryschema1", name = "bigqueryschema1", definition = schemaOut)
+      )
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = None, timestampAttribute = Some("timestampAttribute")),
-        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = None))
+      val sources = List(
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = None, timestampAttribute = Some("timestampAttribute")),
+        BigQueryTapDefinition(`type` = "bigquery", id = "bigquerysource1", dataset = "bigquerytest", table = "streaming_word_extract26", writeDisposition = None, createDisposition = None)
+      )
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -165,7 +174,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", schemas = schemas,
-        taps = sources, dag = dag, steps = steps)
+        lookups = Nil, taps = sources, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
@@ -214,9 +224,11 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val schemas = List(inSchema)
 
-      val sources = List(PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = Some("idAttribute"), timestampAttribute = None),
+      val sources = List(
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pout", managedSubscription = None, idAttribute = Some("idAttribute"), timestampAttribute = None),
         BigTableTapDefinition(`type` = "bigtable", id = "bigtablesource1", instanceId = "bigtable-test",
-          tableId = "bigquerytest", familyName = List("cf"), numNodes = 3))
+          tableId = "bigquerytest", familyName = List("cf"), numNodes = 3)
+      )
 
       val dag = List(
         DAGMapping(from = "in", to = "filter"),
@@ -236,7 +248,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
-        taps = sources, schemas = schemas, dag = dag, steps = steps)
+        taps = sources, schemas = schemas, lookups = Nil, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
@@ -345,7 +358,8 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1", taps = sources,
-        schemas = schemas, dag = dag, steps = steps)
+        schemas = schemas, lookups = Nil, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
@@ -396,7 +410,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val sources = List(
         PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = Some(true), timestampAttribute = Some("timestampAttribute"), idAttribute = None),
-        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupCommits = false)
+        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupeStrategy = DedupeStrategy.NONE, allowPartialUpdates = true)
       )
 
       val dag = List(
@@ -417,13 +431,13 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
-        taps = sources, schemas = schemas, dag = dag, steps = steps)
+        taps = sources, schemas = schemas, lookups = Nil, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
 
     "build pubsub to datastore with schema config" in {
-
       val config = SOTMacroJsonConfig("ps2ds-with-schema-test.json")
 
       val def1 =
@@ -491,7 +505,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
 
       val sources = List(
         PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = None, timestampAttribute = None, idAttribute = None),
-        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupCommits = false)
+        DatastoreTapDefinition(`type` = "datastore", id = "datastoresource1", kind = "kind1", dedupeStrategy = DedupeStrategy.NONE)
       )
 
       val dag = List(
@@ -512,13 +526,128 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       )
 
       val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
-        taps = sources, schemas = schemas, dag = dag, steps = steps)
+        taps = sources, schemas = schemas, lookups = Nil, dag = dag, steps = steps)
+
+      expectedConfig should be(config)
+
+    }
+
+    "build pubsub to pubsub with lookup config" in {
+      val config = SOTMacroJsonConfig("ps2ps-with-lookup-test.json")
+
+      val schema1 =
+        """
+          |{
+          |      "type": "record",
+          |      "name": "Message",
+          |      "namespace": "parallelai.sot.avro",
+          |      "fields": [
+          |        {
+          |          "name": "user",
+          |          "type": "string",
+          |          "doc": "Name of the user"
+          |        },
+          |        {
+          |          "name": "teamName",
+          |          "type": "string",
+          |          "doc": "Name of the team"
+          |        },
+          |        {
+          |          "name": "score",
+          |          "type": "int",
+          |          "doc": "User score"
+          |        },
+          |        {
+          |          "name": "eventTime",
+          |          "type": "long",
+          |          "doc": "time when event created"
+          |        },
+          |        {
+          |          "name": "eventTimeStr",
+          |          "type": "string",
+          |          "doc": "event time string for debugging"
+          |        }
+          |      ],
+          |      "doc": "A basic schema for storing user records"
+          |    }
+        """.stripMargin.parseJson.convertTo[AvroDefinition]
+
+      val schema2 =
+        """
+          |{
+          |      "type": "record",
+          |      "name": "MessageExtended",
+          |      "namespace": "parallelai.sot.avro",
+          |      "fields": [
+          |        {
+          |          "name": "user",
+          |          "type": "string",
+          |          "doc": "Name of the user"
+          |        },
+          |        {
+          |          "name": "teamName",
+          |          "type": "string",
+          |          "doc": "Name of the team"
+          |        },
+          |        {
+          |          "name": "score",
+          |          "type": "int",
+          |          "doc": "User score"
+          |        },
+          |        {
+          |          "name": "eventTime",
+          |          "type": "long",
+          |          "doc": "time when event created"
+          |        },
+          |        {
+          |          "name": "eventTimeStr",
+          |          "type": "string",
+          |          "doc": "event time string for debugging"
+          |        },
+          |        {
+          |          "name": "count",
+          |          "type": "int",
+          |          "doc": "example count"
+          |        }
+          |      ],
+          |      "doc": "A basic schema for storing user records"
+          |    }
+        """.stripMargin.stripMargin.parseJson.convertTo[AvroDefinition]
+
+      val inSchema = AvroSchema(`type` = "avro", id = "avroschema1", name = "avroschema1", version = "version2", definition = schema1)
+      val outSchema = AvroSchema(`type` = "avro", id = "avroschema2", name = "avroschema2", version = "version2", definition = schema2)
+
+      val schemas = List(inSchema, outSchema)
+
+      val sources = List(
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource1", topic = "p2pin", managedSubscription = None, timestampAttribute = None, idAttribute = None),
+        PubSubTapDefinition(`type` = "pubsub", id = "pubsubsource2", topic = "p2pout", managedSubscription = None, timestampAttribute = None, idAttribute = None),
+        DatastoreTapDefinition(`type` = "datastore", id = "datastore1", kind = "dataflowwrite", dedupeStrategy = DedupeStrategy.KEEP_LATEST)
+      )
+
+      val dag = List(
+        DAGMapping(from = "in", to = "mapper1"),
+        DAGMapping(from = "mapper1", to = "out")
+      )
+
+      val steps = List(
+        SourceOp(`type` = "source", id = "in", name = "in", schema = "avroschema1", tap = "pubsubsource1"),
+        TransformationOp(`type` = "transformation", id = "mapper1", name = "mapper1", op = "map", params = List(List("m => m.append('count, lookup1.get(\"blah\").map(_.score).getOrElse(1))")), paramsEncoded = false),
+        SinkOp(`type` = "sink", id = "out", name = "out", schema = Some("avroschema2"), tap = "pubsubsource2")
+      )
+
+      val lookups = List(
+        DatastoreLookupDefinition(id = "lookup1", schema = "avroschema1", tap = "datastore1")
+      )
+
+      val expectedConfig = Config(id = "schemaid", name = "schemaname", version = "version1",
+        taps = sources, schemas = schemas, lookups = lookups, dag = dag, steps = steps)
+
       expectedConfig should be(config)
 
     }
 
     "parse nested json schema" in {
-
       val jsonSchema =
         """
           |{
@@ -587,10 +716,7 @@ class JSONDefinitionsSpec extends WordSpec with Matchers {
       ))
       val expectedJSONSchema = JSONSchema(`type` = "json", id = "jsonschema1", name = "jsonschema1name", version = "version1", definition = expectedDefinition)
 
-      jsonSchema should be (expectedJSONSchema)
-
+      jsonSchema should be(expectedJSONSchema)
     }
-
   }
-
 }

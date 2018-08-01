@@ -2,19 +2,20 @@ package parallelai.sot.executor.model
 
 import parallelai.sot.executor.model.SOTMacroConfig.DAGMapping
 
-import scala.collection.immutable.{SortedMap, SortedSet, IndexedSeq => Vec}
-import scala.collection.mutable.{Set => MSet, Stack => MStack}
-import scala.util.{Failure, Success, Try}
-import Vector.{empty => emptySeq}
+import scala.collection.immutable.{ SortedMap, SortedSet, IndexedSeq => Vec }
+import scala.collection.mutable.{ Set => MSet, Stack => MStack }
+import scala.util.{ Failure, Success, Try }
+import Vector.{ empty => emptySeq }
 import scala.annotation.tailrec
 import scala.math.Ordering
 
 object Topology {
-  /** Creates an empty topology with no vertices or edges.
-    *
-    * @tparam V vertex type
-    * @tparam E edge type
-    */
+  /**
+   * Creates an empty topology with no vertices or edges.
+   *
+   * @tparam V vertex type
+   * @tparam E edge type
+   */
   def empty[V, E <: Edge[V]] = apply[V, E](emptySeq, Set.empty)(0, Map.empty)
 
   trait Edge[+V] {
@@ -70,14 +71,14 @@ object Topology {
     buildEdges(e, topV)
   }
 
-  def topologicalSort[A : Ordering](edges: Seq[(A, A)]): (Seq[A], Seq[(A, A)]) = {
+  def topologicalSort[A: Ordering](edges: Seq[(A, A)]): (Seq[A], Seq[(A, A)]) = {
     @tailrec
-    def tsort(toPreds: Map[A, SortedSet[A]], done: Seq[A], doneEdges: Seq[(A, A)]): (Seq[A],Seq[(A, A)]) = {
+    def tsort(toPreds: Map[A, SortedSet[A]], done: Seq[A], doneEdges: Seq[(A, A)]): (Seq[A], Seq[(A, A)]) = {
       val (noPreds, hasPreds) = toPreds.partition { _._2.isEmpty }
       if (noPreds.isEmpty) {
         if (hasPreds.isEmpty) (done, doneEdges) else sys.error(hasPreds.toString)
       } else {
-        val found = noPreds.map { _._1 } .to[SortedSet]
+        val found = noPreds.map { _._1 }.to[SortedSet]
         val aToA = hasPreds.map { case (k, v) => v.intersect(found).map((_, k)) }
         val updatedDoneEdges = doneEdges ++ aToA.flatten
         tsort(hasPreds.mapValues { _ -- found }, done ++ found, updatedDoneEdges)
@@ -85,37 +86,39 @@ object Topology {
     }
 
     val toPred = edges.foldLeft(SortedMap[A, SortedSet[A]]()) { (acc, e) =>
-      acc + (e._1 -> acc.getOrElse(e._1, SortedSet[A]())) + (e._2 -> (acc.getOrElse(e._2, SortedSet[A]()) + e._1))    }
+      acc + (e._1 -> acc.getOrElse(e._1, SortedSet[A]())) + (e._2 -> (acc.getOrElse(e._2, SortedSet[A]()) + e._1))
+    }
     tsort(toPred, Seq(), Seq())
   }
 
 }
 
-/** An online topological order maintenance structure. This is an immutable data structure with
-  * amortized costs. The edge adding operation returns a new copy of the modified structure along
-  * with a list of vertices which have been moved due to the insertion. The caller can then use
-  * that list to adjust any views (e.g. DSP processes).
-  *
-  * @param  vertices    the vertices in the structure
-  * @param  edges       a set of edges between the vertices
-  * @param  unconnected the number of unconnected vertices (the leading elements in `vertices`)
-  * @param  edgeMap     allows lookup of edges via source vertex keys
-  * @tparam V vertex type
-  * @tparam E edge type
-  */
-final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], edges: Set[E])
-                                                           (val unconnected: Int, val edgeMap: Map[V, Set[E]])
-  extends Ordering[V] {
+/**
+ * An online topological order maintenance structure. This is an immutable data structure with
+ * amortized costs. The edge adding operation returns a new copy of the modified structure along
+ * with a list of vertices which have been moved due to the insertion. The caller can then use
+ * that list to adjust any views (e.g. DSP processes).
+ *
+ * @param  vertices    the vertices in the structure
+ * @param  edges       a set of edges between the vertices
+ * @param  unconnected the number of unconnected vertices (the leading elements in `vertices`)
+ * @param  edgeMap     allows lookup of edges via source vertex keys
+ * @tparam V vertex type
+ * @tparam E edge type
+ */
+final case class Topology[V, E <: Topology.Edge[V]] private (vertices: Vec[V], edges: Set[E])(val unconnected: Int, val edgeMap: Map[V, Set[E]])
+    extends Ordering[V] {
 
-  import parallelai.sot.executor.model.Topology.{Move, CycleDetected, MoveAfter, MoveBefore}
+  import parallelai.sot.executor.model.Topology.{ Move, CycleDetected, MoveAfter, MoveBefore }
 
   private type T = Topology[V, E]
 
   override def toString = s"Topology($vertices, $edges)($unconnected, $edgeMap)"
 
-  /** For two connected vertices `a` and `b`, returns `-1` if `a` is before `b`, or `1` if `a` follows `b`,
-    * or `0` if both are equal. Throws an exception if `a` or `b` is unconnected.
-    */
+  /**
+   * For two connected vertices `a` and `b`, returns `-1` if `a` is before `b`, or `1` if `a` follows `b`,
+   * or `0` if both are equal. Throws an exception if `a` or `b` is unconnected.
+   */
   def compare(a: V, b: V): Int = {
     val ai = vertices.indexOf(a)
     val bi = vertices.indexOf(b)
@@ -123,19 +126,20 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
     if (ai < bi) -1 else if (ai > bi) 1 else 0
   }
 
-  /** Tries to insert an edge into the topological order.
-    * Throws an exception if the source or target vertex of the edge is not contained in the vertex list of this
-    * structure.
-    *
-    * @param e the edge to insert
-    * @return `Failure` if the edge would violate acyclicity, otherwise `Success` of a tuple
-    *         that contains the new topology and possibly affected vertices which need to
-    *         be moved with respect to the reference to reflect the new ordering. In case
-    *         that the reference is the source vertex of the added edge, the affected vertices
-    *         should be moved _after_ the reference and keep their internal grouping order.
-    *         In case the reference is the target vertex, the affected vertices should be
-    *         moved _before_ the reference
-    */
+  /**
+   * Tries to insert an edge into the topological order.
+   * Throws an exception if the source or target vertex of the edge is not contained in the vertex list of this
+   * structure.
+   *
+   * @param e the edge to insert
+   * @return `Failure` if the edge would violate acyclicity, otherwise `Success` of a tuple
+   *         that contains the new topology and possibly affected vertices which need to
+   *         be moved with respect to the reference to reflect the new ordering. In case
+   *         that the reference is the source vertex of the added edge, the affected vertices
+   *         should be moved _after_ the reference and keep their internal grouping order.
+   *         In case the reference is the target vertex, the affected vertices should be
+   *         moved _before_ the reference
+   */
   def addEdge(e: E): Try[(T, Option[Move[V]])] = {
     val source = e.from
     val target = e.to
@@ -182,13 +186,14 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
     }
   }
 
-  /** Tests if an edge can be added without producing a cycle.
-    *
-    * @param e the edge to test
-    * @return `true` if the insertion is possible. Then calling `addEdge` is guaranteed to be a `Success`.
-    *         `false` if the insertion would introduce a cycle. Then calling `addEdge` is guaranteed to be a
-    *         `Failure`
-    */
+  /**
+   * Tests if an edge can be added without producing a cycle.
+   *
+   * @param e the edge to test
+   * @return `true` if the insertion is possible. Then calling `addEdge` is guaranteed to be a `Success`.
+   *         `false` if the insertion would introduce a cycle. Then calling `addEdge` is guaranteed to be a
+   *         `Failure`
+   */
   def canAddEdge(e: E): Boolean = {
     val source = e.from
     val target = e.to
@@ -201,12 +206,13 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
         val newEdgeMap: Map[V, Set[E]] = edgeMap + (source -> (edgeMap.getOrElse(source, Set.empty) + e))
         discovery(visited, newEdgeMap, target, upBound)
       }
-      )
+    )
   }
 
-  /** Removes the edge from the topology. If the edge is not contained in the
-    * structure, returns the topology unmodified.
-    */
+  /**
+   * Removes the edge from the topology. If the edge is not contained in the
+   * structure, returns the topology unmodified.
+   */
   def removeEdge(e: E): Topology[V, E] = {
     if (edges.contains(e)) {
       val source = e.from
@@ -216,20 +222,22 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
     } else this
   }
 
-  /** Adds a new vertex to the set of unconnected vertices. Throws an exception
-    * if the vertex had been added before.
-    */
+  /**
+   * Adds a new vertex to the set of unconnected vertices. Throws an exception
+   * if the vertex had been added before.
+   */
   def addVertex(v: V): Topology[V, E] = {
     if (vertices.contains(v)) throw new IllegalArgumentException(s"Vertex $v was already added")
     copy(v +: vertices)(unconnected + 1, edgeMap)
   }
 
-  /** Removes a vertex and all associated '''outgoing''' edges. If the vertex is not
-    * contained in the structure, returns the unmodified topology.
-    *
-    * '''Note:''' incoming edges pointing to the removed vertex are not detected and removed.
-    * this is the responsibility of the caller.
-    */
+  /**
+   * Removes a vertex and all associated '''outgoing''' edges. If the vertex is not
+   * contained in the structure, returns the unmodified topology.
+   *
+   * '''Note:''' incoming edges pointing to the removed vertex are not detected and removed.
+   * this is the responsibility of the caller.
+   */
   def removeVertex(v: V): Topology[V, E] = {
     val idx = vertices.indexOf(v)
     if (idx >= 0) {
@@ -289,7 +297,7 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
   def getSinkVertices() = {
     vertices.slice(unconnected, vertices.length).flatMap { v =>
       //check if the target has inbound connections
-      val ex = edges.exists{ e => e.from == v }
+      val ex = edges.exists { e => e.from == v }
       if (ex) None
       else Some(v)
     }.toSet
@@ -300,7 +308,7 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
   def getSourceVertices() = {
     vertices.slice(unconnected, vertices.length).flatMap { v =>
       //check if the target has outbound connections
-      val ex = edges.exists{ e => e.to == v }
+      val ex = edges.exists { e => e.to == v }
       if (ex) None
       else Some(v)
     }.toSet
@@ -310,7 +318,7 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
   def findWithIncomingEdges(n: Int = 1) = {
     vertices.slice(unconnected, vertices.length).flatMap { v =>
       //check if the target has outbound connections
-      val ex = edges.filter{ e => e.to == v }
+      val ex = edges.filter { e => e.to == v }
       if (ex.size > n) Some(v)
       else None
     }.toSet
@@ -320,7 +328,7 @@ final case class Topology[V, E <: Topology.Edge[V]] private(vertices: Vec[V], ed
   def findWithOutgoingEdges(n: Int = 1) = {
     vertices.slice(unconnected, vertices.length).flatMap { v =>
       //check if the target has outbound connections
-      val ex = edges.filter{ e => e.from == v }
+      val ex = edges.filter { e => e.from == v }
       if (ex.size > n) Some(v)
       else None
     }.toSet

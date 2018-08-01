@@ -1,15 +1,10 @@
 package parallelai.sot.executor.model
 
-import java.io.{File, FileInputStream, InputStream}
-
+import java.io.InputStream
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.collection.immutable.Seq
-
-
 object SOTMacroConfig {
-
   sealed trait Definition {
     def `type`: String
 
@@ -28,11 +23,24 @@ object SOTMacroConfig {
     def definition: Definition
   }
 
-  sealed trait TapDefinition {
+  sealed trait TapDefinitionType {
     def `type`: String
+  }
 
+  sealed trait TapDefinition extends TapDefinitionType {
     def id: String
   }
+
+  sealed trait LookupDefinition {
+    def id: String
+
+    def schema: String
+
+    def tap: String
+  }
+
+  /** Lookup Definitions **/
+  case class DatastoreLookupDefinition(id: String, schema: String, tap: String) extends LookupDefinition
 
   /** Schema Definitions **/
   case class AvroDefinition(`type`: String, name: String, namespace: String, fields: JsArray) extends Definition
@@ -51,6 +59,7 @@ object SOTMacroConfig {
 
   case class ByteArrayDefinition(`type`: String, name: String) extends Definition
 
+  case class SeqDefinition(`type`: String = "sequence", name: String = "sequence") extends Definition
 
   /** Schema Types **/
   case class AvroSchema(`type`: String, id: String, name: String, version: String, definition: Definition) extends Schema
@@ -70,24 +79,37 @@ object SOTMacroConfig {
 
   case class GoogleStoreTapDefinition(`type`: String, id: String, bucket: String, blob: String) extends TapDefinition
 
-  //WriteDisposition: WRITE_TRUNCATE | WRITE_APPEND | WRITE_EMPTY
-  //CreateDisposition: CREATE_NEVER | CREATE_IF_NEEDED
+  // WriteDisposition: WRITE_TRUNCATE | WRITE_APPEND | WRITE_EMPTY
+  // CreateDisposition: CREATE_NEVER | CREATE_IF_NEEDED
   case class BigQueryTapDefinition(`type`: String, id: String, dataset: String, table: String, writeDisposition: Option[String], createDisposition: Option[String]) extends TapDefinition
 
   case class BigTableTapDefinition(`type`: String, id: String, instanceId: String, tableId: String, familyName: List[String], numNodes: Int) extends TapDefinition
 
-  case class DatastoreTapDefinition(`type`: String, id: String, kind: String, dedupCommits: Boolean) extends TapDefinition
+  case class DatastoreTapDefinition(`type`: String, id: String, kind: String, dedupeStrategy: DedupeStrategy = DedupeStrategy.NONE, allowPartialUpdates: Boolean = false) extends TapDefinition
+
+  object SeqTapDefinition extends TapDefinitionType {
+    val `type` = "sequence"
+  }
+
+  case class SeqTapDefinition[T <: Product](id: String = "sequenceTapDefinition", content: Seq[T]) extends TapDefinition {
+    def `type`: String = SeqTapDefinition.`type`
+  }
+
+  object KafkaTapDefinitionType extends TapDefinitionType {
+    val `type` = "kafka"
+  }
+
+  case class KafkaTapDefinition(id: String, bootstrap: String, topic: String, group: Option[String], defaultOffset: Option[String], autoCommit: Option[Boolean]) extends TapDefinition {
+    def `type`: String = KafkaTapDefinitionType.`type`
+  }
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
 
-  case class Config(id: String, name: String, version: String, schemas: List[Schema], taps: List[TapDefinition],
-                    dag: List[DAGMapping], steps: List[OpType]) {
-
+  case class Config(id: String, name: String, version: String, schemas: List[Schema], lookups: List[LookupDefinition] = Nil, taps: List[TapDefinition], dag: List[DAGMapping], steps: List[OpType]) {
     def parseDAG(): Topology[String, DAGMapping] = {
       val vertices = (dag.map(_.from) ++ dag.map(_.to)).distinct
       Topology.createTopology(vertices, dag)
     }
-
   }
 
   sealed trait OpType {
@@ -105,33 +127,46 @@ object SOTMacroConfig {
   case class SourceOp(`type`: String, id: String, name: String, schema: String, tap: String) extends OpType
 
   case class SinkOp(`type`: String, id: String, name: String, schema: Option[String], tap: String) extends OpType
-
 }
 
-object SOTMacroJsonConfig {
+object SOTMacroJsonConfig extends SOTMacroJsonConfig
 
+trait SOTMacroJsonConfig {
   import SOTMacroConfig._
 
-  implicit val avroDefinitionFormat = jsonFormat4(AvroDefinition)
-  implicit val protobufDefinitionFormat = jsonFormat3(ProtobufDefinition)
-  implicit val bigQueryDefinitionFormat = jsonFormat3(BigQueryDefinition)
-  implicit val datastoreDefinitionFieldFormat = jsonFormat2(DatastoreDefinitionField)
-  implicit val datastoreDefinitionFormat = jsonFormat3(DatastoreDefinition)
-  implicit val jsonDefinitionFieldFormat: JsonFormat[JSONDefinitionField] = lazyFormat(jsonFormat(JSONDefinitionField, "type", "name", "mode", "fields"))
-  implicit val jsonDefinitionFormat = jsonFormat3(JSONDefinition)
-  implicit val bytearrayDefinitionFormat = jsonFormat2(ByteArrayDefinition)
+  implicit val avroDefinitionFormat: RootJsonFormat[AvroDefinition] =
+    jsonFormat4(AvroDefinition)
 
-  implicit object DefinitionJsonFormat extends RootJsonFormat[Definition] {
+  implicit val protobufDefinitionFormat: RootJsonFormat[ProtobufDefinition] =
+    jsonFormat3(ProtobufDefinition)
 
-    def write(c: Definition): JsValue =
-      c match {
-        case s: AvroDefinition => s.toJson
-        case s: ProtobufDefinition => s.toJson
-        case s: ByteArrayDefinition => s.toJson
-        case s: BigQueryDefinition => s.toJson
-        case s: DatastoreDefinition => s.toJson
-        case s: JSONDefinition => s.toJson
-      }
+  implicit val bigQueryDefinitionFormat: RootJsonFormat[BigQueryDefinition] =
+    jsonFormat3(BigQueryDefinition)
+
+  implicit val datastoreDefinitionFieldFormat: RootJsonFormat[DatastoreDefinitionField] =
+    jsonFormat2(DatastoreDefinitionField)
+
+  implicit val datastoreDefinitionFormat: RootJsonFormat[DatastoreDefinition] =
+    jsonFormat3(DatastoreDefinition)
+
+  implicit val jsonDefinitionFieldFormat: JsonFormat[JSONDefinitionField] =
+    lazyFormat(jsonFormat(JSONDefinitionField, "type", "name", "mode", "fields"))
+
+  implicit val jsonDefinitionFormat: RootJsonFormat[JSONDefinition] =
+    jsonFormat3(JSONDefinition)
+
+  implicit val bytearrayDefinitionFormat: RootJsonFormat[ByteArrayDefinition] =
+    jsonFormat2(ByteArrayDefinition)
+
+  implicit val definitionJsonFormat: RootJsonFormat[Definition] = new RootJsonFormat[Definition] {
+    def write(c: Definition): JsValue = c match {
+      case s: AvroDefinition => s.toJson
+      case s: ProtobufDefinition => s.toJson
+      case s: ByteArrayDefinition => s.toJson
+      case s: BigQueryDefinition => s.toJson
+      case s: DatastoreDefinition => s.toJson
+      case s: JSONDefinition => s.toJson
+    }
 
     def read(value: JsValue): Definition = {
       value.asJsObject.getFields("type") match {
@@ -141,12 +176,14 @@ object SOTMacroJsonConfig {
               AvroDefinition(`type` = objType, name = name, namespace = namespace, fields = fields.asInstanceOf[JsArray])
             case _ => deserializationError("AvroDefinition expected")
           }
+
         case Seq(JsString(typ)) if typ == "bigquerydefinition" =>
           value.asJsObject.getFields("type", "name", "fields") match {
             case Seq(JsString(objType), JsString(name), fields) =>
               BigQueryDefinition(`type` = objType, name = name, fields = fields.asInstanceOf[JsArray])
             case _ => deserializationError("BigQueryDefinition is expected")
           }
+
         case Seq(JsString(typ)) if typ == "datastoredefinition" =>
           value.asJsObject.getFields("type", "name", "fields") match {
             case Seq(JsString(typ), JsString(name), JsArray(fields)) =>
@@ -154,6 +191,7 @@ object SOTMacroJsonConfig {
               DatastoreDefinition(`type` = typ, name = name, fields = fl)
             case _ => deserializationError("DatastoreDefinition is expected")
           }
+
         case Seq(JsString(typ)) if typ == "jsondefinition" =>
           value.asJsObject.getFields("type", "name", "mode", "fields") match {
             case Seq(JsString(typ), JsString(name), JsArray(fields)) =>
@@ -161,31 +199,51 @@ object SOTMacroJsonConfig {
               JSONDefinition(`type` = typ, name = name, fields = fl)
             case _ => deserializationError("JSONDefinition is expected")
           }
+
         case Seq(JsString(typ)) if typ == "protobufdefinition" =>
           value.asJsObject.getFields("type", "name", "schemaBase64") match {
             case Seq(JsString(typ), JsString(name), JsString(schemaBase64)) =>
               ProtobufDefinition(`type` = typ, name = name, schemaBase64 = schemaBase64)
             case _ => deserializationError("ProtobufDefinition is expected")
           }
+
         case Seq(JsString(typ)) if typ == "bytearraydefinition" =>
           value.asJsObject.getFields("type", "name") match {
             case Seq(JsString(typ), JsString(name)) =>
               ByteArrayDefinition(`type` = typ, name = name)
             case _ => deserializationError("ProtobufDefinition is expected")
           }
+
         case _ => deserializationError("Unsupported definition")
       }
     }
   }
 
-  implicit val pubSubTapDefinition = jsonFormat6(PubSubTapDefinition)
-  implicit val googleStoreTapDefinition = jsonFormat4(GoogleStoreTapDefinition)
-  implicit val bigQueryTapDefinition = jsonFormat6(BigQueryTapDefinition)
-  implicit val bigTableTapDefinition = jsonFormat6(BigTableTapDefinition)
-  implicit val datastoreTapDefinition = jsonFormat4(DatastoreTapDefinition)
+  implicit val pubSubTapDefinition: RootJsonFormat[PubSubTapDefinition] =
+    jsonFormat6(PubSubTapDefinition)
 
-  implicit object SourceJsonFormat extends RootJsonFormat[TapDefinition] {
+  implicit val googleStoreTapDefinition: RootJsonFormat[GoogleStoreTapDefinition] =
+    jsonFormat4(GoogleStoreTapDefinition)
 
+  implicit val bigQueryTapDefinition: RootJsonFormat[BigQueryTapDefinition] =
+    jsonFormat6(BigQueryTapDefinition)
+
+  implicit val bigTableTapDefinition: RootJsonFormat[BigTableTapDefinition] =
+    jsonFormat6(BigTableTapDefinition)
+
+  implicit val dedupeStrategyFormat: JsonFormat[DedupeStrategy] = new JsonFormat[DedupeStrategy] {
+    def read(json: JsValue): DedupeStrategy = DedupeStrategy.valueOf(json.convertTo[String])
+
+    def write(obj: DedupeStrategy): JsValue = obj.name().toJson
+  }
+
+  implicit val datastoreTapDefinition: RootJsonFormat[DatastoreTapDefinition] =
+    jsonFormat5(DatastoreTapDefinition)
+
+  implicit val kafkaTapDefinition: RootJsonFormat[KafkaTapDefinition] =
+    jsonFormat6(KafkaTapDefinition)
+
+  implicit val sourceJsonFormat: RootJsonFormat[TapDefinition] = new RootJsonFormat[TapDefinition] {
     def write(s: TapDefinition): JsValue =
       s match {
         case j: PubSubTapDefinition => j.toJson
@@ -193,6 +251,7 @@ object SOTMacroJsonConfig {
         case j: BigQueryTapDefinition => j.toJson
         case j: BigTableTapDefinition => j.toJson
         case j: DatastoreTapDefinition => j.toJson
+        case j: KafkaTapDefinition => s.toJson
       }
 
     def read(value: JsValue): TapDefinition = {
@@ -206,12 +265,14 @@ object SOTMacroJsonConfig {
                 idAttribute = value.asJsObject.fields.get("idAttribute").map(_.convertTo[String]))
             case _ => deserializationError("Pubsub source expected")
           }
+
         case Seq(JsString(typ)) if typ == "googlestore" =>
           value.asJsObject.getFields("type", "id", "bucket", "blob") match {
             case Seq(JsString(objType), JsString(id), JsString(bucket), JsString(blob)) =>
               GoogleStoreTapDefinition(`type` = objType, id = id, bucket = bucket, blob = blob)
             case _ => deserializationError("GoogleStore source expected")
           }
+
         case Seq(JsString(typ)) if typ == "bigquery" =>
           value.asJsObject.getFields("type", "id", "dataset", "table") match {
             case Seq(objType, name, dataset, table) =>
@@ -220,6 +281,7 @@ object SOTMacroJsonConfig {
                 createDisposition = value.asJsObject.fields.get("createDisposition").map(_.convertTo[String]))
             case _ => deserializationError("BigQuery source expected")
           }
+
         case Seq(JsString(typ)) if typ == "bigtable" =>
           value.asJsObject.getFields("type", "id", "instanceId", "tableId", "familyName", "numNodes") match {
             case Seq(JsString(objType), JsString(id), JsString(instanceId), JsString(tableId), familyName, JsNumber(numNodes)) =>
@@ -227,32 +289,57 @@ object SOTMacroJsonConfig {
               BigTableTapDefinition(`type` = objType, id = id, instanceId = instanceId, tableId = tableId, familyName = fn, numNodes = numNodes.toInt)
             case _ => deserializationError("BigTable source expected")
           }
+
         case Seq(JsString(typ)) if typ == "datastore" =>
-          value.asJsObject.getFields("type", "id", "kind", "dedupCommits") match {
-            case Seq(JsString(objType), JsString(id), JsString(kind), JsBoolean(dedupCommits)) =>
-              DatastoreTapDefinition(`type` = objType, id = id, kind = kind, dedupCommits = dedupCommits)
+          value.asJsObject.getFields("type", "id", "kind", "dedupeStrategy", "allowPartialUpdates") match {
+            case Seq(JsString(objType), JsString(id), JsString(kind), dedupeStrategy, JsBoolean(allowPartialUpdates)) =>
+              DatastoreTapDefinition(`type` = objType, id = id, kind = kind, dedupeStrategy = dedupeStrategy.convertTo[DedupeStrategy], allowPartialUpdates = allowPartialUpdates)
+            case Seq(JsString(objType), JsString(id), JsString(kind), dedupeStrategy) =>
+              DatastoreTapDefinition(`type` = objType, id = id, kind = kind, dedupeStrategy = dedupeStrategy.convertTo[DedupeStrategy])
             case _ => deserializationError("Datastore source expected")
           }
+
         case Seq(JsString(typ)) if typ == "googlestore" =>
           value.asJsObject.getFields("type", "id", "bucket", "blob") match {
             case Seq(JsString(objType), JsString(id), JsString(bucket), JsString(blob)) =>
               GoogleStoreTapDefinition(`type` = objType, id = id, bucket = bucket, blob = blob)
             case _ => deserializationError("GoogleStore source expected")
           }
+
+        case Seq(JsString(typ)) if typ == "kafka" =>
+          value.asJsObject.getFields("id", "bootstrap", "topic") match {
+            case Seq(JsString(id), JsString(bootstrap), JsString(topic)) =>
+              KafkaTapDefinition(id = id, bootstrap = bootstrap, topic = topic,
+                group = value.asJsObject.fields.get("group").map(_.convertTo[String]),
+                defaultOffset = value.asJsObject.fields.get("defaultOffset").map(_.convertTo[String]),
+                autoCommit = value.asJsObject.fields.get("autoCommit").map(_.convertTo[Boolean]))
+            case _ => deserializationError("Kafka source expected")
+          }
+
         case _ => deserializationError("Source expected")
       }
     }
   }
 
-  implicit val avroSchemaFormat = jsonFormat5(AvroSchema)
-  implicit val protobufSchemaFormat = jsonFormat5(ProtobufSchema)
-  implicit val bigQuerySchemaFormat = jsonFormat5(BigQuerySchema)
-  implicit val datastoreSchemaFormat = jsonFormat5(DatastoreSchema)
-  implicit val jsonSchemaFormat = jsonFormat5(JSONSchema)
-  implicit val byteArraySchemaFormat = jsonFormat5(ByteArraySchema)
+  implicit val avroSchemaFormat: RootJsonFormat[AvroSchema] =
+    jsonFormat5(AvroSchema)
 
-  implicit object SchemaJsonFormat extends RootJsonFormat[Schema] {
+  implicit val protobufSchemaFormat: RootJsonFormat[ProtobufSchema] =
+    jsonFormat5(ProtobufSchema)
 
+  implicit val bigQuerySchemaFormat: RootJsonFormat[BigQuerySchema] =
+    jsonFormat5(BigQuerySchema)
+
+  implicit val datastoreSchemaFormat: RootJsonFormat[DatastoreSchema] =
+    jsonFormat5(DatastoreSchema)
+
+  implicit val jsonSchemaFormat: RootJsonFormat[JSONSchema] =
+    jsonFormat5(JSONSchema)
+
+  implicit val byteArraySchemaFormat: RootJsonFormat[ByteArraySchema] =
+    jsonFormat5(ByteArraySchema)
+
+  implicit val schemaJsonFormat: RootJsonFormat[Schema] = new RootJsonFormat[Schema] {
     def write(c: Schema): JsValue =
       c match {
         case s: AvroSchema => s.toJson
@@ -265,60 +352,66 @@ object SOTMacroJsonConfig {
 
     def read(value: JsValue): Schema = {
       value.asJsObject.getFields("type") match {
-        case Seq(JsString(typ)) if typ == "avro" => {
+        case Seq(JsString(typ)) if typ == "avro" =>
           value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
               AvroSchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Avro schema expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "protobuf" => {
+
+        case Seq(JsString(typ)) if typ == "protobuf" =>
           value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
               ProtobufSchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Protobuf schema expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "bigquery" => {
+
+        case Seq(JsString(typ)) if typ == "bigquery" =>
           value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
               BigQuerySchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("BigQuery schema expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "datastore" => {
+
+        case Seq(JsString(typ)) if typ == "datastore" =>
           value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
               DatastoreSchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("Datastore schema expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "json" => {
+
+        case Seq(JsString(typ)) if typ == "json" =>
           value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
               JSONSchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("JSON schema expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "bytearray" => {
+
+        case Seq(JsString(typ)) if typ == "bytearray" =>
           value.asJsObject.getFields("type", "id", "name", "version", "definition") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(version), definition) =>
               ByteArraySchema(`type` = objType, id = id, name = name, version = version, definition = definition.convertTo[Definition])
             case _ => deserializationError("ByteArray schema expected")
           }
-        }
+
         case _ => deserializationError("Schema expected")
       }
     }
   }
 
-  implicit val tfPredictOpFormat = jsonFormat8(TFPredictOp)
-  implicit val transformationOpFormat = jsonFormat6(TransformationOp)
-  implicit val sinkOpFormat = jsonFormat5(SinkOp)
-  implicit val sourceOpFormat = jsonFormat5(SourceOp)
+  implicit val tfPredictOpFormat: RootJsonFormat[TFPredictOp] =
+    jsonFormat8(TFPredictOp)
 
-  implicit object OpJsonFormat extends RootJsonFormat[OpType] {
+  implicit val transformationOpFormat: RootJsonFormat[TransformationOp] =
+    jsonFormat6(TransformationOp)
 
+  implicit val sinkOpFormat: RootJsonFormat[SinkOp] =
+    jsonFormat5(SinkOp)
+
+  implicit val sourceOpFormat: RootJsonFormat[SourceOp] =
+    jsonFormat5(SourceOp)
+
+  implicit val opJsonFormat: RootJsonFormat[OpType] = new RootJsonFormat[OpType] {
     def write(c: OpType): JsValue = {
       c match {
         case s: TFPredictOp => s.toJson
@@ -330,47 +423,62 @@ object SOTMacroJsonConfig {
 
     def read(value: JsValue): OpType = {
       value.asJsObject.getFields("type") match {
-        case Seq(JsString(typ)) if typ == "source" => {
-          value.asJsObject.getFields("type", "id", "name", "schema", "source") match {
-            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(source)) =>
-              SourceOp(`type` = objType, id = id, name = name, schema = schema, tap = source)
+        case Seq(JsString(typ)) if typ == "source" =>
+          value.asJsObject.getFields("type", "id", "name", "schema", "tap") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(tap)) =>
+              SourceOp(`type` = objType, id = id, name = name, schema = schema, tap = tap)
             case _ => deserializationError("SourceOp type expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "sink" => {
-          value.asJsObject.getFields("type", "id", "name", "source", "schema") match {
-            case Seq(JsString(objType), JsString(id), JsString(name), JsString(source), JsString(schema)) =>
-              SinkOp(`type` = objType, id = id, name = name, schema = Some(schema), tap = source)
-            case Seq(JsString(objType), JsString(id), JsString(name), JsString(source)) =>
-              SinkOp(`type` = objType, id = id, name = name, schema = None, tap = source)
+
+        case Seq(JsString(typ)) if typ == "sink" =>
+          value.asJsObject.getFields("type", "id", "name", "schema", "tap") match {
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(schema), JsString(tap)) =>
+              SinkOp(`type` = objType, id = id, name = name, schema = Option(schema), tap = tap)
+
+            case Seq(JsString(objType), JsString(id), JsString(name), JsString(tap)) =>
+              SinkOp(`type` = objType, id = id, name = name, schema = None, tap = tap)
+
             case _ => deserializationError("SinkOp type expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "transformation" => {
+
+        case Seq(JsString(typ)) if typ == "transformation" =>
           value.asJsObject.getFields("type", "id", "name", "op", "params", "paramsEncoded") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(op), JsArray(params), JsBoolean(paramsEncoded)) =>
-              TransformationOp(`type` = objType, id = id, name = name, op = op, params = params.map(_.convertTo[Seq[String]])
-                , paramsEncoded = paramsEncoded)
+              TransformationOp(`type` = objType, id = id, name = name, op = op, params = params.map(_.convertTo[Seq[String]]), paramsEncoded = paramsEncoded)
             case _ => deserializationError("TransformationOp type expected")
           }
-        }
-        case Seq(JsString(typ)) if typ == "tfpredict" => {
+
+        case Seq(JsString(typ)) if typ == "tfpredict" =>
           value.asJsObject.getFields("type", "id", "name", "modelBucket", "modelPath", "fetchOps", "inFn", "outFn") match {
             case Seq(JsString(objType), JsString(id), JsString(name), JsString(modelBucket), JsString(modelPath),
-            JsArray(fetchOps), JsString(inFn), JsString(outFn)) =>
+              JsArray(fetchOps), JsString(inFn), JsString(outFn)) =>
               val fOps = fetchOps.map(_.convertTo[String])
               TFPredictOp(`type` = objType, id = id, name = name, modelBucket = modelBucket, modelPath = modelPath, fetchOps = fOps,
                 inFn = inFn, outFn = outFn)
             case _ => deserializationError("tfpredict type expected")
           }
-        }
+
         case _ => deserializationError("SchemaType expected")
       }
     }
   }
 
-  implicit val dagFormat = jsonFormat2(DAGMapping)
-  implicit val configFormat = jsonFormat7(Config)
+  implicit val lookupDefinitionFormat: RootJsonFormat[LookupDefinition] = new RootJsonFormat[LookupDefinition] {
+    implicit val datastoreFormat: RootJsonFormat[DatastoreLookupDefinition] = jsonFormat3(DatastoreLookupDefinition)
+
+    def read(json: JsValue): DatastoreLookupDefinition =
+      datastoreFormat.read(json)
+
+    def write(obj: LookupDefinition): JsValue = obj match {
+      case d: DatastoreLookupDefinition => d.toJson
+    }
+  }
+
+  implicit val dagFormat: RootJsonFormat[DAGMapping] =
+    jsonFormat2(DAGMapping)
+
+  implicit val configFormat: RootJsonFormat[Config] =
+    jsonFormat8(Config)
 
   def apply(fileName: String): Config = {
     val stream: InputStream = getClass.getResourceAsStream("/" + fileName)
