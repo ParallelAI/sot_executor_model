@@ -107,7 +107,7 @@ object SOTMacroConfig {
     def `type`: String = KafkaTapDefinitionType.`type`
   }
 
-  case class ElasticTapDefinition(id: String, host: String, esIndex: String, esType: String) extends TapDefinition {
+  case class ElasticTapDefinition(id: String, host: String, port: Int, cluster: String, esIndex: String, esType: String, flushInterval: Int) extends TapDefinition {
     def `type`: String = ElasticTapDefinitionType.`type`
   }
 
@@ -252,7 +252,7 @@ trait SOTMacroJsonConfig {
     jsonFormat6(KafkaTapDefinition)
 
   implicit val elasticTapDefinition: RootJsonFormat[ElasticTapDefinition] =
-    jsonFormat4(ElasticTapDefinition)
+    jsonFormat7(ElasticTapDefinition)
 
   implicit val sourceJsonFormat: RootJsonFormat[TapDefinition] = new RootJsonFormat[TapDefinition] {
     def write(s: TapDefinition): JsValue =
@@ -328,9 +328,9 @@ trait SOTMacroJsonConfig {
           }
 
         case Seq(JsString(typ)) if typ == "elastic" =>
-          value.asJsObject.getFields("id", "host", "esIndex", "esType") match {
-            case Seq(JsString(id), JsString(host), JsString(esIndex), JsString(esType)) =>
-              ElasticTapDefinition(id, host, esIndex, esType)
+          value.asJsObject.getFields("id", "host", "port", "cluster", "esIndex", "esType", "flushInterval") match {
+            case Seq(JsString(id), JsString(host), JsNumber(port), JsString(cluster), JsString(esIndex), JsString(esType), JsNumber(flushInterval)) =>
+              ElasticTapDefinition(id, host, port.toIntExact, cluster, esIndex, esType, flushInterval.toIntExact)
             case _ => deserializationError("Elastic source expected")
           }
 

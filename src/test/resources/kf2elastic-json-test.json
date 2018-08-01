@@ -43,16 +43,22 @@
     {
       "type": "elastic",
       "id": "elastictap1",
-      "host": "0.0.0.0:9092",
+      "host": "0.0.0.0",
+      "port": 9300,
+      "cluster": "local",
       "esIndex": "my-index1",
-      "esType": "my-type1"
+      "esType": "my-type1",
+      "flushInterval": 1
     },
     {
       "type": "elastic",
       "id": "elastictap2",
-      "host": "0.0.0.0:9092",
+      "host": "0.0.0.0",
+      "port": 9300,
+      "cluster": "local",
       "esIndex": "my-index2",
-      "esType": "my-type2"
+      "esType": "my-type2",
+      "flushInterval": 1
     }
   ],
   "steps": [

@@ -8,7 +8,7 @@ import spray.json._
 class ElasticTapDefinitionSpec extends FlatSpec with MustMatchers {
   "ElasticTapDefinition" should "be of expected type" in {
 
-    val tapDefinition = ElasticTapDefinition("my-id", "my-bootstrap", "my-index", "my-index")
+    val tapDefinition = ElasticTapDefinition("my-id", "my-bootstrap", 9300, "local", "my-index", "my-index", 1)
 
     tapDefinition.`type` mustEqual ElasticTapDefinitionType.`type`
   }
@@ -58,8 +58,8 @@ class ElasticTapDefinitionSpec extends FlatSpec with MustMatchers {
     val schemas = List(inSchema)
 
     val sources = List(
-      ElasticTapDefinition("elastictap1", "0.0.0.0:9092", "my-index1", "my-type1"),
-      ElasticTapDefinition("elastictap2", "0.0.0.0:9092", "my-index2", "my-type2")
+      ElasticTapDefinition("elastictap1", "0.0.0.0", 9300, "local", "my-index1", "my-type1", 1),
+      ElasticTapDefinition("elastictap2", "0.0.0.0", 9300, "local", "my-index2", "my-type2", 1)
     )
 
     val dag = List(
