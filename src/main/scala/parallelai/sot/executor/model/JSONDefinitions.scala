@@ -99,8 +99,16 @@ object SOTMacroConfig {
     val `type` = "kafka"
   }
 
+  object ElasticTapDefinitionType extends TapDefinitionType {
+    val `type` = "elastic"
+  }
+
   case class KafkaTapDefinition(id: String, bootstrap: String, topic: String, group: Option[String], defaultOffset: Option[String], autoCommit: Option[Boolean]) extends TapDefinition {
     def `type`: String = KafkaTapDefinitionType.`type`
+  }
+
+  case class ElasticTapDefinition(id: String, host: String, esIndex: String, esType: String) extends TapDefinition {
+    def `type`: String = ElasticTapDefinitionType.`type`
   }
 
   case class DAGMapping(from: String, to: String) extends Topology.Edge[String]
@@ -243,6 +251,9 @@ trait SOTMacroJsonConfig {
   implicit val kafkaTapDefinition: RootJsonFormat[KafkaTapDefinition] =
     jsonFormat6(KafkaTapDefinition)
 
+  implicit val elasticTapDefinition: RootJsonFormat[ElasticTapDefinition] =
+    jsonFormat4(ElasticTapDefinition)
+
   implicit val sourceJsonFormat: RootJsonFormat[TapDefinition] = new RootJsonFormat[TapDefinition] {
     def write(s: TapDefinition): JsValue =
       s match {
@@ -314,6 +325,13 @@ trait SOTMacroJsonConfig {
                 defaultOffset = value.asJsObject.fields.get("defaultOffset").map(_.convertTo[String]),
                 autoCommit = value.asJsObject.fields.get("autoCommit").map(_.convertTo[Boolean]))
             case _ => deserializationError("Kafka source expected")
+          }
+
+        case Seq(JsString(typ)) if typ == "elastic" =>
+          value.asJsObject.getFields("id", "host", "esIndex", "esType") match {
+            case Seq(JsString(id), JsString(host), JsString(esIndex), JsString(esType)) =>
+              ElasticTapDefinition(id, host, esIndex, esType)
+            case _ => deserializationError("Elastic source expected")
           }
 
         case _ => deserializationError("Source expected")
